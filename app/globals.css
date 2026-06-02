@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dance Beat — dark by default. shadcn tokens mapeados a la paleta Lumen */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 251 100% 82%;          /* Lumen #B8A4FF */
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 66%;     /* Bone mute #A8A8A8 */
+
+    --accent: 251 100% 82%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 100% 67%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 29%;               /* #4A4A4A */
+    --input: 0 0% 15%;
+    --ring: 251 100% 82%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ink text-bone font-body antialiased;
+    font-feature-settings: "ss01", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    @apply bg-lumen text-ink;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Grain overlay — usar sobre fotos B&N para textura editorial */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--tw-bg-grain);
+    opacity: 0.08;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  /* Hairline divider editorial */
+  .hairline {
+    @apply h-px w-full bg-bone-border/40;
+  }
+
+  /* Glass card — para /planes y modales */
+  .glass {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.01) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Etiqueta tipo "ACADEMY" del logo — sans light, tracking amplio */
+  .eyebrow {
+    @apply text-xs font-light uppercase tracking-[0.3em] text-bone-mute;
+  }
+}
