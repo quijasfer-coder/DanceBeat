@@ -137,7 +137,7 @@ export default async function PlanesPage() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map((plan) => {
             const perks = (plan.perks as string[] | null) ?? [];
             return (
@@ -147,7 +147,7 @@ export default async function PlanesPage() {
                 className={cn(
                   "relative rounded-2xl p-8 flex flex-col scroll-mt-24 transition-all duration-300",
                   plan.featured
-                    ? "bg-lumen text-ink border border-lumen shadow-[0_0_60px_rgba(184,164,255,0.25)] lg:scale-105 lg:-mt-2"
+                    ? "bg-lumen text-ink border-2 border-lumen shadow-[0_0_80px_rgba(184,164,255,0.35)] ring-4 ring-lumen/20"
                     : "glass hover:border-lumen/40",
                 )}
               >
