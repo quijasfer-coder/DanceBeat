@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Users, Bell, CalendarCheck } from "lucide-react";
+import { X, Users, Bell, CalendarCheck, Image as ImageIcon } from "lucide-react";
 
 const STORAGE_KEY = "db_welcome_dismissed";
 
@@ -85,6 +85,18 @@ export function WelcomeBanner({ name }: { name: string }) {
             <p className="text-sm font-medium text-bone">Próximas reservas</p>
             <p className="text-xs text-bone-mute mt-0.5 leading-relaxed">
               Consulta las clases reservadas para cada alumno y gestiona su agenda fácilmente.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 w-7 h-7 rounded-lg bg-lumen/15 flex items-center justify-center shrink-0">
+            <ImageIcon className="w-3.5 h-3.5 text-lumen" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-bone">Contenido exclusivo</p>
+            <p className="text-xs text-bone-mute mt-0.5 leading-relaxed">
+              Accede a fotos y recuerdos de todos los festivales y presentaciones de Dance Beat, solo para familias.
             </p>
           </div>
         </div>
