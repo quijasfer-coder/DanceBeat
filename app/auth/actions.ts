@@ -47,12 +47,16 @@ export async function signUpAction(
     return { error: "La contraseña debe tener al menos 8 caracteres." };
   }
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://dance-beat-tau.vercel.app";
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { full_name: fullName, phone },
+      emailRedirectTo: `${siteUrl}/auth/callback?type=signup`,
     },
   });
 
