@@ -175,32 +175,35 @@ export async function createClassAction(
   const studioId = (formData.get("studio_id") as string) || null;
   const teacherIdRaw = (formData.get("teacher_id") as string) ?? "";
   const teacherId = teacherIdRaw && teacherIdRaw !== "none" ? teacherIdRaw : null;
-  const dayOfWeek = parseInt(formData.get("day_of_week") as string, 10);
+  const daysOfWeek = formData.getAll("days_of_week").map((d) => parseInt(d as string, 10));
   const startsAtTime = (formData.get("starts_at_time") as string)?.trim();
   const durationMin = parseInt(formData.get("duration_min") as string, 10);
   const level = formData.get("level") as DanceLevel;
   const capacity = parseInt(formData.get("capacity") as string, 10);
   const ageMinStr = (formData.get("age_min") as string)?.trim();
   const ageMaxStr = (formData.get("age_max") as string)?.trim();
-  const isActive = formData.get("is_active") !== "off"; // default ON
+  const isActive = formData.get("is_active") !== "off";
 
-  if (!studioId || !startsAtTime || isNaN(dayOfWeek) || isNaN(capacity)) {
+  if (!studioId || !startsAtTime || daysOfWeek.length === 0 || isNaN(capacity)) {
     return { error: "Faltan campos obligatorios de programación." };
   }
 
-  const { error: classErr } = await supabase.from("classes").insert({
-    style_id: styleId,
-    studio_id: studioId,
-    teacher_id: teacherId,
-    day_of_week: dayOfWeek,
-    starts_at_time: startsAtTime,
-    duration_min: isNaN(durationMin) ? 60 : durationMin,
-    level,
-    capacity,
-    age_min: ageMinStr ? parseInt(ageMinStr, 10) : null,
-    age_max: ageMaxStr ? parseInt(ageMaxStr, 10) : null,
-    is_active: isActive,
-  });
+  // Crear un registro de clase por cada día seleccionado
+  const { error: classErr } = await supabase.from("classes").insert(
+    daysOfWeek.map((day) => ({
+      style_id: styleId,
+      studio_id: studioId,
+      teacher_id: teacherId,
+      day_of_week: day,
+      starts_at_time: startsAtTime,
+      duration_min: isNaN(durationMin) ? 60 : durationMin,
+      level,
+      capacity,
+      age_min: ageMinStr ? parseInt(ageMinStr, 10) : null,
+      age_max: ageMaxStr ? parseInt(ageMaxStr, 10) : null,
+      is_active: isActive,
+    })),
+  );
 
   if (classErr) return { error: `Class: ${classErr.message}` };
 

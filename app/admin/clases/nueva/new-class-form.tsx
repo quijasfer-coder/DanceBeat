@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { Save, AlertCircle } from "lucide-react";
+import { Save, AlertCircle, Check } from "lucide-react";
 import {
   createClassAction,
   type AdminFormState,
@@ -38,6 +38,37 @@ const helpClass = "text-xs text-bone-mute mt-2 leading-relaxed";
 const sectionLabelClass =
   "font-mono text-[10px] uppercase tracking-[0.3em] text-lumen mb-2";
 
+function DayPicker({ selected, onChange }: { selected: number[]; onChange: (days: number[]) => void }) {
+  function toggle(val: number) {
+    onChange(
+      selected.includes(val) ? selected.filter((d) => d !== val) : [...selected, val],
+    );
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {dayOptions.map((d) => {
+        const active = selected.includes(d.value);
+        return (
+          <button
+            key={d.value}
+            type="button"
+            onClick={() => toggle(d.value)}
+            className={cn(
+              "relative px-4 py-2 rounded-lg text-sm font-medium border transition-colors",
+              active
+                ? "bg-lumen text-ink border-lumen"
+                : "border-bone-border/40 text-bone-mute hover:border-bone hover:text-bone",
+            )}
+          >
+            {active && <Check className="inline w-3 h-3 mr-1.5 -mt-0.5" />}
+            {d.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function NewClassForm({
   styles,
   studios,
@@ -55,6 +86,7 @@ export function NewClassForm({
     styles.length === 0 ? "new" : "existing",
   );
   const [newName, setNewName] = useState("");
+  const [selectedDays, setSelectedDays] = useState<number[]>([1]);
 
   const slugFromName = newName
     .toLowerCase()
@@ -277,23 +309,20 @@ export function NewClassForm({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="day_of_week" className={labelClass}>
-                Día
-              </label>
-              <select
-                id="day_of_week"
-                name="day_of_week"
-                defaultValue={1}
-                className={inputClass}
-                required
-              >
-                {dayOptions.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>Días de la semana</label>
+              <DayPicker selected={selectedDays} onChange={setSelectedDays} />
+              {selectedDays.map((d) => (
+                <input key={d} type="hidden" name="days_of_week" value={d} />
+              ))}
+              {selectedDays.length === 0 && (
+                <p className="text-xs text-danger mt-2">Selecciona al menos un día.</p>
+              )}
+              <p className={helpClass}>
+                Si la clase se da en más de un día (ej. Lunes y Miércoles), se crearán{" "}
+                <strong className="text-bone">{selectedDays.length > 1 ? selectedDays.length : "los"}</strong>{" "}
+                registros necesarios automáticamente.
+              </p>
             </div>
             <div>
               <label htmlFor="starts_at_time" className={labelClass}>
