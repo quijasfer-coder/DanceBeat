@@ -319,9 +319,12 @@ export function NewClassForm({
                 <p className="text-xs text-danger mt-2">Selecciona al menos un día.</p>
               )}
               <p className={helpClass}>
-                Si la clase se da en más de un día (ej. Lunes y Miércoles), se crearán{" "}
-                <strong className="text-bone">{selectedDays.length > 1 ? selectedDays.length : "los"}</strong>{" "}
-                registros necesarios automáticamente.
+                Selecciona todos los días en que se imparte esta clase a la misma hora.
+                Se creará un registro por cada día automáticamente.{" "}
+                <strong className="text-bone">
+                  Si la misma clase se da en días distintos con diferente horario,
+                  debes crearla por separado.
+                </strong>
               </p>
             </div>
             <div>
