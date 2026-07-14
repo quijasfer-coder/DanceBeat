@@ -1,20 +1,22 @@
 import Link from "next/link";
 import { Search, User, Phone, Mail, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { DeactivateStudent } from "@/components/admin/deactivate-student";
 
 export const metadata = {
   title: "Admin · Alumnos",
   robots: { index: false },
 };
 
-type SearchParams = Promise<{ q?: string }>;
+type SearchParams = Promise<{ q?: string; ver?: string }>;
 
 export default async function AdminAlumnosPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { q } = await searchParams;
+  const { q, ver } = await searchParams;
+  const showInactive = ver === "inactivos";
   const supabase = await createClient();
 
   // Fetch students y profiles por separado para evitar embed type issues
@@ -31,12 +33,16 @@ export default async function AdminAlumnosPage({
     (profilesRes.data ?? []).map((p) => [p.id, p]),
   );
 
-  // Filtro de búsqueda en JS (volumen pequeño en MVP)
+  const activeStudents = allStudents.filter((s) => s.is_active !== false);
+  const inactiveStudents = allStudents.filter((s) => s.is_active === false);
+
+  const baseList = showInactive ? inactiveStudents : activeStudents;
+
   const students = q
-    ? allStudents.filter((s) =>
+    ? baseList.filter((s) =>
         s.full_name.toLowerCase().includes(q.toLowerCase()),
       )
-    : allStudents;
+    : baseList;
 
   return (
     <div className="p-10 max-w-6xl">
@@ -46,9 +52,35 @@ export default async function AdminAlumnosPage({
         </p>
         <h1 className="font-display text-5xl mt-2">Alumnos</h1>
         <p className="text-sm text-bone-mute mt-3">
-          {allStudents.length} alumno{allStudents.length === 1 ? "" : "s"}{" "}
-          registrado{allStudents.length === 1 ? "" : "s"}.
+          {activeStudents.length} alumno{activeStudents.length === 1 ? "" : "s"} activo{activeStudents.length === 1 ? "" : "s"}
+          {inactiveStudents.length > 0 && ` · ${inactiveStudents.length} dado${inactiveStudents.length === 1 ? "" : "s"} de baja`}.
         </p>
+      </div>
+
+      {/* Tabs activos / inactivos */}
+      <div className="flex items-center gap-1 mb-6">
+        <Link
+          href="/admin/alumnos"
+          className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-colors ${
+            !showInactive
+              ? "bg-bone text-ink"
+              : "text-bone-mute hover:text-bone"
+          }`}
+        >
+          Activos ({activeStudents.length})
+        </Link>
+        {inactiveStudents.length > 0 && (
+          <Link
+            href="/admin/alumnos?ver=inactivos"
+            className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-colors ${
+              showInactive
+                ? "bg-bone text-ink"
+                : "text-bone-mute hover:text-bone"
+            }`}
+          >
+            Inactivos ({inactiveStudents.length})
+          </Link>
+        )}
       </div>
 
       {/* Search */}
@@ -85,6 +117,7 @@ export default async function AdminAlumnosPage({
                 <Th>Titular de la cuenta</Th>
                 <Th>Contacto</Th>
                 <Th>Notas médicas</Th>
+                <th className="px-6 py-4" />
               </tr>
             </thead>
             <tbody>
@@ -156,6 +189,13 @@ export default async function AdminAlumnosPage({
                       ) : (
                         <span className="text-bone-mute/50">—</span>
                       )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <DeactivateStudent
+                        studentId={s.id}
+                        studentName={s.full_name}
+                        isActive={s.is_active !== false}
+                      />
                     </td>
                   </tr>
                 );

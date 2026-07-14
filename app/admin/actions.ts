@@ -240,6 +240,37 @@ export async function deleteClassAction(
 }
 
 /**
+ * Da de baja (soft-delete) a un alumno poniéndolo is_active = false.
+ * El registro se conserva en BD para historial.
+ */
+export async function deactivateStudentAction(
+  studentId: string,
+): Promise<void> {
+  await requireAdmin("/admin/alumnos");
+  const supabase = await createClient();
+  await supabase
+    .from("students")
+    .update({ is_active: false })
+    .eq("id", studentId);
+  revalidatePath("/admin/alumnos");
+}
+
+/**
+ * Reactiva a un alumno dado de baja.
+ */
+export async function reactivateStudentAction(
+  studentId: string,
+): Promise<void> {
+  await requireAdmin("/admin/alumnos");
+  const supabase = await createClient();
+  await supabase
+    .from("students")
+    .update({ is_active: true })
+    .eq("id", studentId);
+  revalidatePath("/admin/alumnos");
+}
+
+/**
  * Toggle is_active de una clase desde el listado.
  */
 export async function toggleClassActiveAction(

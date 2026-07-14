@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, Edit3, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { ToggleClassActive } from "@/components/admin/toggle-class-active";
 
 export const metadata = {
   title: "Admin · Clases",
@@ -154,13 +155,16 @@ export default async function AdminClasesListPage({
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Link
-                        href={`/admin/clases/${c.id}/editar`}
-                        className="inline-flex items-center gap-1.5 text-xs text-bone hover:text-lumen transition-colors"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        Editar
-                      </Link>
+                      <div className="inline-flex items-center justify-end">
+                        <Link
+                          href={`/admin/clases/${c.id}/editar`}
+                          className="inline-flex items-center gap-1.5 text-xs text-bone hover:text-lumen transition-colors"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Editar
+                        </Link>
+                        <ToggleClassActive classId={c.id} isActive={c.is_active} />
+                      </div>
                     </td>
                   </tr>
                 );
