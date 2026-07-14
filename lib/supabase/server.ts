@@ -37,6 +37,19 @@ export async function createClient() {
 }
 
 /**
+ * Cliente Supabase con service role — bypasea RLS completamente.
+ * Usar SOLO en server actions de admin donde se necesite modificar
+ * filas que pertenecen a otros usuarios.
+ */
+export function createAdminClient() {
+  return createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}
+
+/**
  * Cliente Supabase SIN cookies, para uso en contextos fuera de request:
  * `generateStaticParams`, `generateMetadata` durante prerender, scripts,
  * etc. Solo puede leer datos que estén permitidos a `anon` por RLS.

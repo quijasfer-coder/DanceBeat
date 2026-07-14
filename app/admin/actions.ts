@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import type { Database } from "@/lib/database.types";
 
@@ -247,7 +247,7 @@ export async function deactivateStudentAction(
   studentId: string,
 ): Promise<void> {
   await requireAdmin("/admin/alumnos");
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   await supabase
     .from("students")
     .update({ is_active: false })
@@ -262,7 +262,7 @@ export async function reactivateStudentAction(
   studentId: string,
 ): Promise<void> {
   await requireAdmin("/admin/alumnos");
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   await supabase
     .from("students")
     .update({ is_active: true })
