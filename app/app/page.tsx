@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { WelcomeBanner } from "@/components/app/welcome-banner";
 import {
   Calendar,
   Users,
@@ -76,6 +77,8 @@ export default async function AppDashboardPage() {
 
   return (
     <div className="container py-12">
+      <WelcomeBanner name={profile.full_name} />
+
       <div className="mb-12">
         <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute">
           Hola
