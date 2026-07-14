@@ -1,6 +1,5 @@
 import { RegistroForm } from "@/components/auth/registro-form";
 import { getPlanByCode, type PlanCode } from "@/lib/queries/plans";
-import { getSetting } from "@/lib/queries/settings";
 
 export const metadata = {
   title: "Crear cuenta",
@@ -17,17 +16,9 @@ export default async function RegistroPage({
 }) {
   const { plan: planCode } = await searchParams;
 
-  const [selectedPlan, enrollmentFeeStr] = await Promise.all([
-    planCode ? getPlanByCode(planCode as PlanCode) : Promise.resolve(null),
-    getSetting("enrollment_fee_cents", "160000"),
-  ]);
+  const selectedPlan = planCode
+    ? await getPlanByCode(planCode as PlanCode)
+    : null;
 
-  const enrollmentFeeCents = parseInt(enrollmentFeeStr, 10);
-
-  return (
-    <RegistroForm
-      selectedPlan={selectedPlan ?? undefined}
-      enrollmentFeeCents={enrollmentFeeCents}
-    />
-  );
+  return <RegistroForm selectedPlan={selectedPlan ?? undefined} />;
 }

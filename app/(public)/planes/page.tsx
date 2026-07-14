@@ -147,7 +147,7 @@ export default async function PlanesPage() {
                 className={cn(
                   "relative rounded-2xl p-8 flex flex-col scroll-mt-24 transition-all duration-300",
                   plan.featured
-                    ? "bg-lumen text-ink border-2 border-lumen shadow-[0_0_80px_rgba(184,164,255,0.35)] ring-4 ring-lumen/20"
+                    ? "bg-lumen text-ink border-2 border-lumen shadow-[0_0_30px_rgba(184,164,255,0.25)]"
                     : "glass hover:border-lumen/40",
                 )}
               >
@@ -160,7 +160,7 @@ export default async function PlanesPage() {
                 <p
                   className={cn(
                     "eyebrow",
-                    plan.featured ? "text-ink/60" : "text-bone-mute",
+                    plan.featured ? "!text-ink" : "text-bone-mute",
                   )}
                 >
                   {plan.tagline}

@@ -1,10 +1,15 @@
 import Link from "next/link";
-import { Check, ArrowRight, ArrowUpRight } from "lucide-react";
+import { Check, ArrowRight, ArrowUpRight, Lock } from "lucide-react";
 import { getActivePlans, formatMxn } from "@/lib/queries/plans";
+import { getCurrentProfile } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export async function PlansPreview() {
-  const plans = await getActivePlans();
+  const [plans, profile] = await Promise.all([
+    getActivePlans(),
+    getCurrentProfile(),
+  ]);
+  const isLoggedIn = !!profile;
 
   return (
     <section className="relative py-32 overflow-hidden">
@@ -45,7 +50,7 @@ export async function PlansPreview() {
                 className={cn(
                   "relative rounded-2xl p-8 flex flex-col transition-all duration-300",
                   plan.featured
-                    ? "bg-lumen text-ink border border-lumen shadow-[0_0_60px_rgba(184,164,255,0.25)] lg:scale-105 lg:-mt-2"
+                    ? "bg-lumen text-ink border border-lumen shadow-[0_0_30px_rgba(184,164,255,0.25)]"
                     : "glass hover:border-lumen/40",
                 )}
               >
@@ -58,7 +63,7 @@ export async function PlansPreview() {
                 <p
                   className={cn(
                     "eyebrow",
-                    plan.featured ? "text-ink/60" : "text-bone-mute",
+                    plan.featured ? "!text-ink" : "text-bone-mute",
                   )}
                 >
                   {plan.tagline}
@@ -72,24 +77,36 @@ export async function PlansPreview() {
                   {plan.name}
                 </h3>
 
-                <div className="mt-6 flex items-baseline gap-2">
-                  <span
+                {isLoggedIn ? (
+                  <div className="mt-6 flex items-baseline gap-2">
+                    <span
+                      className={cn(
+                        "font-display text-5xl",
+                        plan.featured ? "text-ink" : "text-bone",
+                      )}
+                    >
+                      {formatMxn(plan.price_cents)}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-sm",
+                        plan.featured ? "text-ink/60" : "text-bone-mute",
+                      )}
+                    >
+                      {plan.cadence}
+                    </span>
+                  </div>
+                ) : (
+                  <div
                     className={cn(
-                      "font-display text-5xl",
-                      plan.featured ? "text-ink" : "text-bone",
+                      "mt-6 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest",
+                      plan.featured ? "text-ink/70" : "text-bone-mute",
                     )}
                   >
-                    {formatMxn(plan.price_cents)}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-sm",
-                      plan.featured ? "text-ink/60" : "text-bone-mute",
-                    )}
-                  >
-                    {plan.cadence}
-                  </span>
-                </div>
+                    <Lock className="w-3.5 h-3.5" />
+                    Crea tu cuenta para ver el precio
+                  </div>
+                )}
 
                 <ul className="mt-8 space-y-3 flex-1">
                   {perks.slice(0, 3).map((p) => (

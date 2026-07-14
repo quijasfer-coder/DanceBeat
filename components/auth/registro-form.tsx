@@ -5,16 +5,14 @@ import { useActionState, useState } from "react";
 import { ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { GoogleButton } from "./google-button";
 import type { Plan } from "@/lib/queries/plans";
-import { formatMxn } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { signUpAction, type AuthState } from "@/app/auth/actions";
 
 type Props = {
   selectedPlan?: Plan;
-  enrollmentFeeCents: number;
 };
 
-export function RegistroForm({ selectedPlan, enrollmentFeeCents }: Props) {
+export function RegistroForm({ selectedPlan }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     signUpAction,
@@ -49,15 +47,9 @@ export function RegistroForm({ selectedPlan, enrollmentFeeCents }: Props) {
           </p>
           <div className="flex items-baseline justify-between gap-4">
             <p className="font-display text-2xl">{selectedPlan.name}</p>
-            <p className="font-display text-xl">
-              {formatMxn(selectedPlan.price_cents)}
-              <span className="text-xs text-bone-mute ml-1">
-                {selectedPlan.cadence}
-              </span>
-            </p>
           </div>
           <p className="text-xs text-bone-mute mt-3">
-            + Inscripción única de {formatMxn(enrollmentFeeCents)} al primer alta.{" "}
+            Crea tu cuenta para ver el precio y el costo de inscripción.{" "}
             <Link
               href="/planes"
               className="underline hover:text-bone transition-colors"

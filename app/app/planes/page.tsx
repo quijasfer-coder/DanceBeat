@@ -205,7 +205,7 @@ export default async function AppPlanesPage() {
                     Contratar en línea (próximamente)
                   </button>
                   <a
-                    href={`https://wa.me/525500000000?text=Hola,%20quiero%20contratar%20el%20plan%20${encodeURIComponent(plan.name)}%20para%20mi%20cuenta`}
+                    href={`https://wa.me/5215588000185?text=Hola,%20quiero%20contratar%20el%20plan%20${encodeURIComponent(plan.name)}%20para%20mi%20cuenta`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={cn(

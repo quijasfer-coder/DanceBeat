@@ -89,7 +89,7 @@ export const studios: Studio[] = [
 ];
 
 export const contact = {
-  phone: "55 8800 0185",
-  whatsappUrl: "https://wa.me/525588000185",
+  phone: "+52 1 55 8800 0185",
+  whatsappUrl: "https://wa.me/5215588000185",
   instagramUrl: "https://instagram.com/dancebeat.studio", // TODO: confirmar handle real
 };

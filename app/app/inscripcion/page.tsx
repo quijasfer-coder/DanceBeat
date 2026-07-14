@@ -66,7 +66,7 @@ export default async function InscripcionPage() {
           Pagar en línea (próximamente)
         </button>
         <a
-          href="https://wa.me/525500000000?text=Hola,%20quiero%20pagar%20mi%20inscripci%C3%B3n%20a%20Dance%20Beat"
+          href="https://wa.me/5215588000185?text=Hola,%20quiero%20pagar%20mi%20inscripci%C3%B3n%20a%20Dance%20Beat"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-medium bg-bone text-ink hover:bg-lumen transition-colors"
