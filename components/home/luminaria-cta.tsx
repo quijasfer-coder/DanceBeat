@@ -1,7 +1,4 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-
-const LUMINARIA_TICKETS_URL = "https://www.goliiive.com/el-alma-y-el-mar";
 
 export function LuminariaCta() {
   return (
@@ -29,16 +26,7 @@ export function LuminariaCta() {
           formación.
         </p>
 
-        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href={LUMINARIA_TICKETS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 bg-lumen text-ink px-8 py-4 rounded-full font-medium hover:bg-bone transition-colors"
-          >
-            Compra tus boletos
-            <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </Link>
+        <div className="mt-12 flex items-center justify-center">
           <Link
             href="/luminaria"
             className="inline-flex items-center gap-2 text-sm text-bone-mute hover:text-bone transition-colors"
