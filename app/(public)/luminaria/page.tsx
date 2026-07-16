@@ -1,18 +1,17 @@
 import Image from "next/image";
-import {
-  conceptBlocks,
-  luminariaCityGallery,
-  currentShow,
-} from "@/lib/data/luminaria";
+import { conceptBlocks, editions, nextEdition, type Edition } from "@/lib/data/luminaria";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "Luminaria",
   description:
-    "Cada año Dance Beat Academy lleva a sus alumnos a un escenario profesional. Conoce Luminaria 2026 — El Alma y El Mar.",
+    "Cada ciclo Dance Beat Academy lleva a sus alumnos a un escenario profesional. Conoce las ediciones de Luminaria.",
 };
 
 export default function LuminariaPage() {
+  const pastEditions = editions.slice(0, -1);
+  const featuredEdition = editions[editions.length - 1];
+
   return (
     <div>
       {/* ─── HERO ─── */}
@@ -28,18 +27,18 @@ export default function LuminariaPage() {
         />
 
         <div className="container relative text-center">
-          <p className="eyebrow text-lumen">El show del año</p>
+          <p className="eyebrow text-lumen">El show del ciclo</p>
           <h1 className="font-display text-7xl md:text-9xl lg:text-[10rem] mt-6 leading-[0.9] text-balance">
             <span className="italic">Luminaria.</span>
           </h1>
           <p className="mt-10 text-lg md:text-xl text-bone-mute max-w-2xl mx-auto text-pretty">
-            Cada año culminamos con un proyecto especial que lleva el talento
-            de nuestros alumnos a un escenario profesional.
+            Cada ciclo culminamos con un proyecto especial que lleva el
+            talento de nuestros alumnos a un escenario profesional.
           </p>
         </div>
       </section>
 
-      {/* ─── BLOQUES CONCEPTUALES + FOTOS DE LUMINARIA CITY ─── */}
+      {/* ─── BLOQUES CONCEPTUALES ─── */}
       <section className="container py-20 space-y-32 md:space-y-48">
         {conceptBlocks.map((block, i) => {
           const reverse = i % 2 === 1;
@@ -92,67 +91,80 @@ export default function LuminariaPage() {
         })}
       </section>
 
-      {/* ─── GALERÍA LUMINARIA CITY ─── */}
-      <section className="container py-32">
-        <div className="text-center mb-16">
-          <p className="eyebrow text-lumen">Edición pasada</p>
-          <h2 className="font-display text-4xl md:text-6xl mt-4 leading-[0.95] text-balance">
-            Luminaria <span className="italic">City.</span>
-          </h2>
-          <p className="mt-6 text-bone-mute max-w-md mx-auto">
-            Postales del show 2025 — la primera vez que reunimos a todas las
-            categorías de la academia bajo un mismo escenario.
-          </p>
-        </div>
+      {/* ─── EDICIONES PASADAS ─── */}
+      {pastEditions.map((edition) => (
+        <PastEditionGallery key={edition.year} edition={edition} />
+      ))}
 
-        {/* Masonry grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[260px] gap-3 md:gap-4">
-          {luminariaCityGallery.map((photo, i) => (
-            <div
-              key={i}
-              className={cn(
-                "relative overflow-hidden rounded-xl border border-bone-border/30 group",
-                photo.size === "wide" && "col-span-2",
-                photo.size === "tall" && "row-span-2",
-              )}
-            >
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                fill
-                sizes="(min-width: 768px) 25vw, 50vw"
-                className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-[1.02] group-hover:scale-100"
-              />
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ─── EDICIÓN DESTACADA (la más reciente) ─── */}
+      <FeaturedEdition edition={featuredEdition} />
 
-      {/* ─── SHOW 2026 — EL ALMA Y EL MAR ─── */}
-      <ShowSection />
+      {/* ─── PRÓXIMA EDICIÓN ─── */}
+      <NextEditionTeaser />
     </div>
   );
 }
 
 /* ────────────────────────────────────────────────────────────── */
-/*  Sección del show actual — fondo y logo personalizables        */
+/*  Edición pasada — galería compacta                              */
 /* ────────────────────────────────────────────────────────────── */
 
-function ShowSection() {
-  const { name, edition, pitch, showBackgroundImage, showLogoImage } =
-    currentShow;
+function PastEditionGallery({ edition }: { edition: Edition }) {
+  return (
+    <section className="container py-32">
+      <div className="text-center mb-16">
+        <p className="eyebrow text-lumen">{edition.label}</p>
+        <h2 className="font-display text-4xl md:text-6xl mt-4 leading-[0.95] text-balance">
+          {edition.name}.
+        </h2>
+        <p className="mt-6 text-bone-mute max-w-md mx-auto">{edition.blurb}</p>
+      </div>
+
+      {/* Masonry grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[260px] gap-3 md:gap-4">
+        {edition.gallery.map((photo, i) => (
+          <div
+            key={i}
+            className={cn(
+              "relative overflow-hidden rounded-xl border border-bone-border/30 group",
+              photo.size === "wide" && "col-span-2",
+              photo.size === "tall" && "row-span-2",
+            )}
+          >
+            <Image
+              src={photo.src}
+              alt={photo.alt}
+              fill
+              sizes="(min-width: 768px) 25vw, 50vw"
+              className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-[1.02] group-hover:scale-100"
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*  Edición destacada — recap full-bleed de la edición más reciente */
+/* ────────────────────────────────────────────────────────────── */
+
+function FeaturedEdition({ edition }: { edition: Edition }) {
+  const { name, label, pitch, heroImage, showLogoImage } = edition;
 
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
-      {/* Background del show — reemplazable */}
-      <Image
-        src={showBackgroundImage}
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-      />
+      {/* Background del show */}
+      {heroImage && (
+        <Image
+          src={heroImage}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      )}
 
       {/* Overlay oscuro para legibilidad — ajustable */}
       <div
@@ -160,7 +172,7 @@ function ShowSection() {
         className="absolute inset-0 bg-ink/70 pointer-events-none"
       />
 
-      {/* Gradiente superior para fundir con la galería */}
+      {/* Gradiente superior para fundir con la sección anterior */}
       <div
         aria-hidden
         className="absolute inset-x-0 top-0 h-32 pointer-events-none"
@@ -180,7 +192,7 @@ function ShowSection() {
       />
 
       <div className="container relative z-10 text-center py-32">
-        <p className="eyebrow text-lumen mb-8">{edition}</p>
+        <p className="eyebrow text-lumen mb-8">{label}</p>
 
         {/* Logo del show — si hay imagen, mostrarla; si no, fallback a texto */}
         {showLogoImage ? (
@@ -198,19 +210,39 @@ function ShowSection() {
           </h2>
         )}
 
-        <div className="mt-12 max-w-2xl mx-auto space-y-6 text-bone text-pretty">
-          {pitch.map((p, i) => (
-            <p
-              key={i}
-              className={cn(
-                "text-lg md:text-xl leading-relaxed",
-                i === pitch.length - 1 && "text-lumen italic",
-              )}
-            >
-              {p}
-            </p>
-          ))}
-        </div>
+        {pitch && (
+          <div className="mt-12 max-w-2xl mx-auto space-y-6 text-bone text-pretty">
+            {pitch.map((p, i) => (
+              <p
+                key={i}
+                className={cn(
+                  "text-lg md:text-xl leading-relaxed",
+                  i === pitch.length - 1 && "text-lumen italic",
+                )}
+              >
+                {p}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*  Próxima edición — placeholder hasta que se anuncie el show     */
+/* ────────────────────────────────────────────────────────────── */
+
+function NextEditionTeaser() {
+  return (
+    <section className="container py-32">
+      <div className="max-w-lg mx-auto text-center border border-bone-border/30 rounded-2xl px-8 py-16">
+        <p className="eyebrow text-lumen">Próximamente</p>
+        <h2 className="font-display text-4xl md:text-5xl mt-4 leading-[0.95] text-balance">
+          La siguiente <span className="italic text-bone-mute">edición.</span>
+        </h2>
+        <p className="mt-6 text-bone-mute">{nextEdition.hint}</p>
       </div>
     </section>
   );
