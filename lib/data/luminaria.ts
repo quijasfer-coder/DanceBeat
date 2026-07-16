@@ -103,7 +103,6 @@ export const currentShow = {
   year: 2026,
   edition: "Luminaria 2026",
   name: "El Alma y El Mar",
-  ticketsUrl: "https://www.goliiive.com/el-alma-y-el-mar",
 
   // Background del show — reemplazar por foto/render del show real
   showBackgroundImage: "/luminaria/show-background.jpg",
@@ -113,9 +112,9 @@ export const currentShow = {
   // Cuando tengas el logo: showLogoImage: "/luminaria/show-logo.png",
 
   pitch: [
-    "En Luminaria 2026 nos sumergimos en un universo donde el océano revela lo que guarda en lo más profundo.",
-    "“El alma y el mar” es una experiencia escénica que invita a escuchar sus historias: la magia, la calma, la diversión y la sabiduría que habitan bajo la superficie.",
-    "A través de la danza, la música, las luces y visuales inmersivos, nuestros alumnos transforman el escenario en un portal azul donde cada movimiento es una ola y cada coreografía una emoción.",
-    "Acompáñanos y sé parte de esta experiencia única en escena.",
+    "En Luminaria 2026 nos sumergimos en un universo donde el océano reveló lo que guarda en lo más profundo.",
+    "“El alma y el mar” fue una experiencia escénica que invitó a escuchar sus historias: la magia, la calma, la diversión y la sabiduría que habitan bajo la superficie.",
+    "A través de la danza, la música, las luces y visuales inmersivos, nuestros alumnos transformaron el escenario en un portal azul donde cada movimiento fue una ola y cada coreografía una emoción.",
+    "Gracias a todos los que nos acompañaron en esta experiencia única en escena.",
   ],
 };

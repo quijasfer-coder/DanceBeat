@@ -1,6 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import {
   conceptBlocks,
   luminariaCityGallery,
@@ -141,7 +139,7 @@ export default function LuminariaPage() {
 /* ────────────────────────────────────────────────────────────── */
 
 function ShowSection() {
-  const { name, edition, pitch, ticketsUrl, showBackgroundImage, showLogoImage } =
+  const { name, edition, pitch, showBackgroundImage, showLogoImage } =
     currentShow;
 
   return (
@@ -213,16 +211,6 @@ function ShowSection() {
             </p>
           ))}
         </div>
-
-        <Link
-          href={ticketsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group mt-14 inline-flex items-center gap-2 bg-lumen text-ink px-10 py-5 rounded-full font-medium text-lg hover:bg-bone transition-colors"
-        >
-          Compra tus boletos
-          <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-        </Link>
       </div>
     </section>
   );
