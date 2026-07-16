@@ -51,7 +51,7 @@ export default async function ClasesPage() {
 
       {/* Grid */}
       <section className="container">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
           {styles.map((s) => {
             const styleClasses = classesByStyle.get(s.id) ?? [];
             return (
