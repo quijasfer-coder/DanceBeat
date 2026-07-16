@@ -121,6 +121,10 @@ export const editions: Edition[] = [
         src: "/luminaria/luminaria-city/gallery-8.jpg",
         alt: "Luminaria City 2025 — escena 8",
       },
+      {
+        src: "/luminaria/luminaria-city/gallery-9.jpg",
+        alt: "Luminaria City 2025 — escena 9",
+      },
     ],
   },
   {
@@ -172,6 +176,10 @@ export const editions: Edition[] = [
       {
         src: "/luminaria/el-alma-y-el-mar/gallery-8.jpg",
         alt: "El Alma y El Mar 2026 — escena 8",
+      },
+      {
+        src: "/luminaria/el-alma-y-el-mar/gallery-9.jpg",
+        alt: "El Alma y El Mar 2026 — escena 9",
       },
     ],
   },

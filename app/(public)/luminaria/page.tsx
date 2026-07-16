@@ -123,7 +123,7 @@ function EditionGallery({ edition }: { edition: Edition }) {
       </div>
 
       {/* Masonry grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[260px] gap-3 md:gap-4">
+      <div className="grid grid-flow-row-dense grid-cols-2 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[260px] gap-3 md:gap-4">
         {edition.gallery.map((photo, i) => (
           <div
             key={i}
