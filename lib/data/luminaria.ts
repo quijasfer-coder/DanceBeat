@@ -56,7 +56,7 @@ export const conceptBlocks: ConceptBlock[] = [
   },
   {
     title: "Producciones como",
-    subtitle: "Luminaria City",
+    subtitle: "Luminaria",
     body: "Reúnen a todas las categorías de la academia en un espectáculo único, donde la danza se acompaña de proyecciones digitales, música y un show de luces diseñado para elevar la experiencia.",
     image: "/luminaria/concept-3.jpg",
   },
