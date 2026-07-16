@@ -93,11 +93,12 @@ export default function LuminariaPage() {
 
       {/* ─── EDICIONES PASADAS ─── */}
       {pastEditions.map((edition) => (
-        <PastEditionGallery key={edition.year} edition={edition} />
+        <EditionGallery key={edition.year} edition={edition} />
       ))}
 
       {/* ─── EDICIÓN DESTACADA (la más reciente) ─── */}
       <FeaturedEdition edition={featuredEdition} />
+      <EditionGallery edition={featuredEdition} />
 
       {/* ─── PRÓXIMA EDICIÓN ─── */}
       <NextEditionTeaser />
@@ -106,10 +107,11 @@ export default function LuminariaPage() {
 }
 
 /* ────────────────────────────────────────────────────────────── */
-/*  Edición pasada — galería compacta                              */
+/*  Galería de una edición — se usa para ediciones pasadas y también */
+/*  debajo del recap de la edición destacada                        */
 /* ────────────────────────────────────────────────────────────── */
 
-function PastEditionGallery({ edition }: { edition: Edition }) {
+function EditionGallery({ edition }: { edition: Edition }) {
   return (
     <section className="container py-32">
       <div className="text-center mb-16">
