@@ -182,5 +182,6 @@ export const editions: Edition[] = [
  * se anuncie el show del siguiente ciclo.
  */
 export const nextEdition = {
+  year: 2027,
   hint: "La siguiente edición de Luminaria se anunciará pronto.",
 };

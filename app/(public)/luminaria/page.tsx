@@ -240,9 +240,9 @@ function NextEditionTeaser() {
   return (
     <section className="container py-32">
       <div className="max-w-lg mx-auto text-center border border-bone-border/30 rounded-2xl px-8 py-16">
-        <p className="eyebrow text-lumen">Próximamente</p>
+        <p className="eyebrow text-lumen">Luminaria {nextEdition.year}</p>
         <h2 className="font-display text-4xl md:text-5xl mt-4 leading-[0.95] text-balance">
-          La siguiente <span className="italic text-bone-mute">edición.</span>
+          Próxima <span className="italic text-bone-mute">edición.</span>
         </h2>
         <p className="mt-6 text-bone-mute">{nextEdition.hint}</p>
       </div>
