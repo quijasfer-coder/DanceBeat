@@ -1,6 +1,5 @@
 // Datos de la página /academy.
 // TODO clienta:
-//  · Reemplazar imágenes placeholder con fotos reales de las clases/alumnas
 //  · Confirmar handle de Instagram y horario de atención del WhatsApp
 
 export type Pillar = {
@@ -24,8 +23,7 @@ export const pillars: Pillar[] = [
     body: "Creamos un ambiente cálido, motivador y de apoyo constante, donde cada alumno se siente contenido, valorado y acompañado de manera personalizada.",
     extra:
       "Aquí se forman no solo bailarines, sino también vínculos reales y amistades para toda la vida.",
-    image:
-      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=80",
+    image: "/academy/comunidad.jpg",
   },
   {
     eyebrow: "Técnica",
@@ -33,8 +31,7 @@ export const pillars: Pillar[] = [
     body: "Nuestras clases tienen un enfoque de alta calidad, moderno y consciente, cuidando la técnica, la alineación y el bienestar físico.",
     extra:
       "Resultados visibles y duraderos, sin dejar de disfrutar el proceso.",
-    image:
-      "https://images.unsplash.com/photo-1518614368389-1f0e3a4e0a78?w=1400&q=80",
+    image: "/academy/tecnica.jpg",
   },
 ];
 
@@ -42,8 +39,7 @@ export const impulse = {
   name: "IMPULSE",
   tagline: "La compañía de la academia.",
   body: "Nos distinguimos por impulsar el talento, la expresión y la confianza de cada uno de nuestros alumnos. Para quienes quieren llevar su crecimiento artístico y personal al siguiente nivel, IMPULSE es el espacio donde la formación se vuelve compañía y la disciplina, escenario.",
-  image:
-    "https://images.unsplash.com/photo-1547347298-4074fc3086f0?w=1600&q=80",
+  image: "/academy/impulse.jpg",
 };
 
 export const closing = {
