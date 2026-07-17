@@ -85,7 +85,9 @@ export function Footer() {
                 <Instagram className="w-5 h-5" />
               </Link>
               <Link
-                href="https://facebook.com"
+                href="https://www.facebook.com/share/1DFfkGDoWH/?mibextid=wwXIfr"
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Facebook"
                 className="text-bone-mute hover:text-lumen transition-colors"
               >
