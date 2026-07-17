@@ -6,6 +6,13 @@ export const metadata = {
   robots: { index: false },
 };
 
-export default function RecuperarPage() {
-  return <RecuperarForm />;
+type SearchParams = Promise<{ linkError?: string }>;
+
+export default async function RecuperarPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { linkError } = await searchParams;
+  return <RecuperarForm linkError={linkError} />;
 }

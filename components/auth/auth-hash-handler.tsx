@@ -8,18 +8,34 @@ import { createBrowserClient } from "@supabase/ssr";
  * Detecta el flujo implícito de Supabase (#access_token= en el hash).
  * Cuando Supabase envía el link de recovery con el token en el hash,
  * este componente lo intercepta y redirige al formulario correcto.
+ *
+ * También detecta el caso de error: si el link de recovery ya expiró o
+ * fue usado, Supabase redirige al Site URL (home) con `error=...` en el
+ * hash y/o la query string, en vez de mandarlo a /auth/callback. Sin
+ * esto, el usuario cae en el home sin ninguna explicación.
  */
 export function AuthHashHandler() {
   const router = useRouter();
 
   useEffect(() => {
     const hash = window.location.hash;
+    const search = window.location.search;
+
+    const hashParams = new URLSearchParams(hash.slice(1));
+    const searchParams = new URLSearchParams(search);
+    const errorCode =
+      hashParams.get("error_code") ?? searchParams.get("error_code");
+
+    if (errorCode) {
+      router.replace(`/auth/recuperar?linkError=${errorCode}`);
+      return;
+    }
+
     if (!hash) return;
 
-    const params = new URLSearchParams(hash.slice(1));
-    const type = params.get("type");
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
+    const type = hashParams.get("type");
+    const accessToken = hashParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token");
 
     if (!accessToken || !type) return;
 

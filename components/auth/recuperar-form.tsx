@@ -8,7 +8,12 @@ import {
   type AuthState,
 } from "@/app/auth/actions";
 
-export function RecuperarForm() {
+const linkErrorMessages: Record<string, string> = {
+  otp_expired:
+    "Tu enlace de recuperación expiró o ya fue usado. Solicita uno nuevo abajo.",
+};
+
+export function RecuperarForm({ linkError }: { linkError?: string }) {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     recoverPasswordAction,
     null,
@@ -29,6 +34,14 @@ export function RecuperarForm() {
           Te enviamos instrucciones por email para volver a entrar.
         </p>
       </div>
+
+      {linkError && !success && (
+        <div className="flex items-start gap-2 text-xs text-danger bg-danger/10 border border-danger/30 rounded-lg p-3 mb-5">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          {linkErrorMessages[linkError] ??
+            "Tu enlace de recuperación ya no es válido. Solicita uno nuevo abajo."}
+        </div>
+      )}
 
       {success ? (
         <div className="flex items-start gap-3 bg-success/10 border border-success/30 rounded-lg p-4">
