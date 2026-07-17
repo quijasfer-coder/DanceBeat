@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, MapPin, Phone, Instagram, MessageCircle } from "lucide-react";
+import { ArrowRight, MapPin, Phone, Instagram, Music2, MessageCircle } from "lucide-react";
 import {
   lead,
   manifesto,
@@ -291,7 +291,23 @@ export default function AcademyPage() {
                   <div>
                     <p className="text-sm font-medium">Instagram</p>
                     <p className="font-mono text-xs text-bone-mute group-hover:text-lumen transition-colors">
-                      @dancebeat.studio
+                      {contact.instagramHandle}
+                    </p>
+                  </div>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={contact.tiktokUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-4 text-bone hover:text-lumen transition-colors"
+                >
+                  <Music2 className="w-5 h-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">TikTok</p>
+                    <p className="font-mono text-xs text-bone-mute group-hover:text-lumen transition-colors">
+                      {contact.tiktokHandle}
                     </p>
                   </div>
                 </a>

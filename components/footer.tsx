@@ -76,7 +76,9 @@ export function Footer() {
           <div className="flex flex-col md:items-end gap-3">
             <div className="flex gap-4">
               <Link
-                href="https://instagram.com"
+                href="https://www.instagram.com/dancebeat_db/"
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Instagram"
                 className="text-bone-mute hover:text-lumen transition-colors"
               >
@@ -90,7 +92,9 @@ export function Footer() {
                 <Facebook className="w-5 h-5" />
               </Link>
               <Link
-                href="https://tiktok.com"
+                href="https://www.tiktok.com/@dancebeat.academy"
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="TikTok"
                 className="text-bone-mute hover:text-lumen transition-colors"
               >

@@ -1,6 +1,6 @@
 // Datos de la página /academy.
 // TODO clienta:
-//  · Confirmar handle de Instagram y horario de atención del WhatsApp
+//  · Confirmar horario de atención del WhatsApp
 
 export type Pillar = {
   eyebrow: string;
@@ -87,5 +87,8 @@ export const studios: Studio[] = [
 export const contact = {
   phone: "+52 1 55 8800 0185",
   whatsappUrl: "https://wa.me/5215588000185",
-  instagramUrl: "https://instagram.com/dancebeat.studio", // TODO: confirmar handle real
+  instagramUrl: "https://www.instagram.com/dancebeat_db/",
+  instagramHandle: "@dancebeat_db",
+  tiktokUrl: "https://www.tiktok.com/@dancebeat.academy",
+  tiktokHandle: "@dancebeat.academy",
 };
