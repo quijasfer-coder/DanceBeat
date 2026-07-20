@@ -11,6 +11,12 @@ import {
 const linkErrorMessages: Record<string, string> = {
   otp_expired:
     "Tu enlace de recuperación expiró o ya fue usado. Solicita uno nuevo abajo.",
+  bad_code_verifier:
+    "Este enlace solo funciona en el mismo navegador donde pediste la recuperación. Ábrelo ahí, o solicita uno nuevo abajo.",
+  flow_state_expired:
+    "Tardaste demasiado en abrir el enlace y expiró. Solicita uno nuevo abajo.",
+  flow_state_not_found:
+    "Este enlace solo funciona en el mismo navegador donde pediste la recuperación. Ábrelo ahí, o solicita uno nuevo abajo.",
 };
 
 export function RecuperarForm({ linkError }: { linkError?: string }) {

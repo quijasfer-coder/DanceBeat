@@ -22,7 +22,17 @@ export default async function ResetPasswordPage({
   if (code) {
     // Flujo PKCE: intercambiar code por sesión
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) redirect("/auth/recuperar");
+    if (error) {
+      // Sin este log no hay forma de saber por qué falló el intercambio
+      // (code ya usado, code_verifier ausente, link viejo, etc.) — antes
+      // se perdía por completo y el usuario caía en el form vacío.
+      console.error(
+        "[reset-password] exchangeCodeForSession falló:",
+        error.code,
+        error.message,
+      );
+      redirect(`/auth/recuperar?linkError=${error.code ?? "exchange_failed"}`);
+    }
   } else {
     // Flujo implícito: la sesión ya fue establecida por AuthHashHandler en el cliente
     const { data: { user } } = await supabase.auth.getUser();
