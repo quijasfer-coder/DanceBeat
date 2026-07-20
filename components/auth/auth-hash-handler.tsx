@@ -13,6 +13,15 @@ import { createBrowserClient } from "@supabase/ssr";
  * fue usado, Supabase redirige al Site URL (home) con `error=...` en el
  * hash y/o la query string, en vez de mandarlo a /auth/callback. Sin
  * esto, el usuario cae en el home sin ninguna explicación.
+ *
+ * Red de seguridad adicional: si el Site URL / Redirect URLs configurados
+ * en el dashboard de Supabase no incluyen /auth/callback, Supabase ignora
+ * el `redirectTo` solicitado y manda al usuario al Site URL raíz (home)
+ * con un `?code=...` suelto en la query string, sin `type`. Sin esto, ese
+ * code nunca se intercambia y el usuario cae en el home sin explicación
+ * — el bug reportado de "el link de recuperar contraseña no hace nada".
+ * Lo correcto es arreglar el Redirect URLs en Supabase, pero esto evita
+ * que el flujo se rompa mientras tanto (o si vuelve a desconfigurarse).
  */
 export function AuthHashHandler() {
   const router = useRouter();
@@ -28,6 +37,12 @@ export function AuthHashHandler() {
 
     if (errorCode) {
       router.replace(`/auth/recuperar?linkError=${errorCode}`);
+      return;
+    }
+
+    const strayCode = searchParams.get("code");
+    if (strayCode) {
+      router.replace(`/auth/callback?code=${strayCode}`);
       return;
     }
 

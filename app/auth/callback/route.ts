@@ -9,7 +9,16 @@ import { createClient } from "@/lib/supabase/server";
  * signup     → intercambia code, redirige a /app
  * invite     → intercambia code, redirige a /auth/reset-password (debe elegir pwd)
  * email_change → intercambia code, redirige a /app
+ * (sin type) → tratado como recovery (ver nota abajo)
  * otros      → intercambia code, redirige a /app
+ *
+ * Nota: si el Redirect URLs del dashboard de Supabase no incluye esta ruta,
+ * Supabase descarta el `redirectTo` completo (incluido `?type=`) y manda al
+ * usuario al Site URL con solo `?code=`. AuthHashHandler reenvía ese code
+ * suelto aquí sin `type`. Como el flujo de recovery es el más común y el
+ * más afectado por esto, tratamos "sin type" igual que "recovery" — es la
+ * opción segura (el usuario solo llega a la pantalla de nueva contraseña,
+ * nunca se le da una sesión iniciada sin querer).
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -20,8 +29,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/`);
   }
 
-  // Recovery: el code lo intercambia la página /auth/reset-password
-  if (type === "recovery") {
+  // Recovery (o sin type, ver nota arriba): el code lo intercambia /auth/reset-password
+  if (type === "recovery" || !type) {
     return NextResponse.redirect(
       `${origin}/auth/reset-password?code=${code}`,
     );
