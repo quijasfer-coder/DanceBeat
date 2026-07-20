@@ -248,10 +248,11 @@ export async function deactivateStudentAction(
 ): Promise<void> {
   await requireAdmin("/admin/alumnos");
   const supabase = createAdminClient();
-  await supabase
+  const { error } = await supabase
     .from("students")
     .update({ is_active: false })
     .eq("id", studentId);
+  if (error) throw new Error(error.message);
   revalidatePath("/admin/alumnos");
 }
 
@@ -263,10 +264,11 @@ export async function reactivateStudentAction(
 ): Promise<void> {
   await requireAdmin("/admin/alumnos");
   const supabase = createAdminClient();
-  await supabase
+  const { error } = await supabase
     .from("students")
     .update({ is_active: true })
     .eq("id", studentId);
+  if (error) throw new Error(error.message);
   revalidatePath("/admin/alumnos");
 }
 
