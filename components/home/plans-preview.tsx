@@ -5,11 +5,14 @@ import { getCurrentProfile } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export async function PlansPreview() {
-  const [plans, profile] = await Promise.all([
+  const [allPlans, profile] = await Promise.all([
     getActivePlans(),
     getCurrentProfile(),
   ]);
   const isLoggedIn = !!profile;
+
+  // Impulse requiere audición — no es autoservicio, no se anuncia aquí.
+  const plans = allPlans.filter((plan) => plan.code !== "impulse");
 
   return (
     <section className="relative py-32 overflow-hidden">
@@ -28,8 +31,8 @@ export async function PlansPreview() {
           <div>
             <p className="eyebrow">Mensualidades</p>
             <h2 className="font-display text-4xl md:text-6xl mt-4 leading-[0.95] text-balance">
-              De <span className="italic">Pulse</span> a{" "}
-              <span className="italic text-lumen">Stage.</span>
+              De <span className="italic">Rhythm</span> a{" "}
+              <span className="italic text-lumen">Cadence.</span>
             </h2>
           </div>
           <Link

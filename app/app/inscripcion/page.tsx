@@ -17,7 +17,7 @@ export default async function InscripcionPage() {
   if (profile.account_status === "rejected") redirect("/app/rechazado");
   if (profile.enrolled_at) redirect("/app");
 
-  const enrollmentFeeRaw = await getSetting("enrollment_fee_cents", "160000");
+  const enrollmentFeeRaw = await getSetting("enrollment_fee_cents", "350000");
   const enrollmentFee = parseInt(enrollmentFeeRaw, 10);
 
   return (

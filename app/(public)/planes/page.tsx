@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export const metadata = {
   title: "Planes",
   description:
-    "Mensualidades desde $1,200 hasta $4,200. Elige tu plan según el ritmo con el que quieres bailar.",
+    "Mensualidades desde $2,200 hasta $3,750. Elige tu plan según el ritmo con el que quieres bailar.",
 };
 
 const faqs = [
@@ -39,7 +39,7 @@ const faqs = [
 ];
 
 export default async function PlanesPage() {
-  const [plans, settings, profile] = await Promise.all([
+  const [allPlans, settings, profile] = await Promise.all([
     getActivePlans(),
     getSettings([
       "enrollment_fee_cents",
@@ -51,8 +51,12 @@ export default async function PlanesPage() {
 
   const isLoggedIn = !!profile;
 
+  // Impulse requiere audición — no es autoservicio, se asigna manualmente
+  // tras seleccionar a la alumna. No se lista junto a los planes normales.
+  const plans = allPlans.filter((plan) => plan.code !== "impulse");
+
   const enrollmentFeeCents = parseInt(
-    settings.enrollment_fee_cents ?? "160000",
+    settings.enrollment_fee_cents ?? "350000",
     10,
   );
   const lateFeeDayOfMonth = parseInt(
@@ -77,9 +81,9 @@ export default async function PlanesPage() {
         <div className="container relative">
           <p className="eyebrow">Mensualidades</p>
           <h1 className="font-display text-6xl md:text-8xl lg:text-9xl mt-6 leading-[0.9] text-balance">
-            De <span className="italic">Pulse</span>
+            De <span className="italic">Rhythm</span>
             <br />
-            a <span className="italic text-lumen">Stage.</span>
+            a <span className="italic text-lumen">Cadence.</span>
           </h1>
           <p className="mt-12 text-lg md:text-xl text-bone-mute max-w-2xl text-pretty">
             Cada plan refleja tu compromiso con la disciplina. Subes de nivel,
@@ -131,7 +135,7 @@ export default async function PlanesPage() {
         <div className="text-center mb-16">
           <p className="eyebrow">Elige tu ritmo</p>
           <h2 className="font-display text-4xl md:text-6xl mt-4 leading-[0.95] text-balance">
-            Seis planes,
+            Cuatro planes,
             <br />
             <span className="italic text-bone-mute">una academia.</span>
           </h2>

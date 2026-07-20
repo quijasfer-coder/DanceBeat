@@ -60,7 +60,7 @@ export default async function ConfiguracionPage({
       <SettingsForm
         initial={{
           enrollment_fee_mxn:
-            parseInt(settings.enrollment_fee_cents ?? "160000", 10) / 100,
+            parseInt(settings.enrollment_fee_cents ?? "350000", 10) / 100,
           late_fee_pct: parseFloat(settings.late_fee_pct ?? "0.10"),
           late_fee_day_of_month: parseInt(
             settings.late_fee_day_of_month ?? "10",

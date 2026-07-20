@@ -70,7 +70,7 @@ export default async function AdminAlumnoDetailPage({
       .select("*, plans:plan_id (name, code)")
       .eq("student_id", student.id)
       .order("created_at", { ascending: false }),
-    getSetting("enrollment_fee_cents", "160000"),
+    getSetting("enrollment_fee_cents", "350000"),
   ]);
   const enrollmentFee = parseInt(enrollmentFeeRaw, 10);
 

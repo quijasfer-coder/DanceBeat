@@ -23,10 +23,13 @@ export default async function AppPlanesPage() {
   const studentList = students ?? [];
   const studentIds = studentList.map((s) => s.id);
 
-  const [plans, subsMap] = await Promise.all([
+  const [allPlans, subsMap] = await Promise.all([
     getActivePlans(),
     getActiveSubscriptionsForStudents(studentIds),
   ]);
+
+  // Impulse requiere audición — no se ofrece por autoservicio/WhatsApp aquí.
+  const plans = allPlans.filter((plan) => plan.code !== "impulse");
 
   const studentsWithoutPlan = studentList.filter((s) => !subsMap.get(s.id));
 
