@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { UserX, UserCheck, AlertCircle } from "lucide-react";
 import { deactivateStudentAction, reactivateStudentAction } from "@/app/admin/actions";
 
@@ -13,6 +14,7 @@ export function DeactivateStudent({
   studentName: string;
   isActive: boolean;
 }) {
+  const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,9 +24,12 @@ export function DeactivateStudent({
     setError(null);
     try {
       await deactivateStudentAction(studentId);
+      // revalidatePath() en el server action no siempre alcanza al router
+      // cuando la acción se llama directo (no vía <form action>) — sin
+      // esto la fila se queda mostrando el estado viejo hasta recargar.
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
-      setPending(false);
     }
     setConfirming(false);
     setPending(false);
@@ -35,10 +40,11 @@ export function DeactivateStudent({
     setError(null);
     try {
       await reactivateStudentAction(studentId);
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
-      setPending(false);
     }
+    setPending(false);
   }
 
   if (error) {
