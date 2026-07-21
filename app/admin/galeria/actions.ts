@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { normalizeDriveImageUrl } from "@/lib/drive";
 import type { Database } from "@/lib/database.types";
 
 type AlbumInsert = Database["public"]["Tables"]["gallery_albums"]["Insert"];
@@ -52,7 +53,7 @@ function readAlbumForm(
       title,
       description: description || null,
       event_date: eventDate || null,
-      cover_url: coverUrl || null,
+      cover_url: coverUrl ? normalizeDriveImageUrl(coverUrl) : null,
       drive_url: driveUrl,
       is_published: isPublished,
       display_order: displayOrder,

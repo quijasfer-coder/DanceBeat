@@ -123,8 +123,10 @@ export function AlbumForm({
           placeholder="https://..."
         />
         <p className="mt-1 text-xs text-bone-mute">
-          Imagen pública (Drive con vista pública, Cloudinary, etc.). Si lo
-          dejas vacío, se muestra una card sin imagen.
+          Puedes pegar el link normal de "Compartir" de un archivo de Drive
+          (se convierte automáticamente), o una imagen directa de
+          Cloudinary/otro host. Si lo dejas vacío, se muestra una card sin
+          imagen.
         </p>
       </div>
 
