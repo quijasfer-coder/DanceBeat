@@ -12,10 +12,11 @@ import {
   Image as ImageIcon,
   LogOut,
 } from "lucide-react";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, getAvailableModes } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/app/auth/actions";
 import { cn } from "@/lib/utils";
+import { RoleSwitcher } from "@/components/role-switcher";
 
 const navItems = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -41,6 +42,7 @@ export default async function AdminLayout({
     .from("profiles")
     .select("id", { count: "exact", head: true })
     .eq("account_status", "pending");
+  const modes = await getAvailableModes(profile);
 
   return (
     <div className="min-h-[100svh] flex">
@@ -86,7 +88,8 @@ export default async function AdminLayout({
           <p className="text-[10px] font-mono uppercase tracking-wider text-bone-mute mb-3">
             {profile.email}
           </p>
-          <form action={signOutAction}>
+          <RoleSwitcher modes={modes} current="admin" />
+          <form action={signOutAction} className="mt-3">
             <button
               type="submit"
               className="w-full flex items-center gap-2 text-xs text-bone-mute hover:text-danger transition-colors"

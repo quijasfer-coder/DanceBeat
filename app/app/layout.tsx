@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, getAvailableModes } from "@/lib/auth";
 import { signOutAction } from "@/app/auth/actions";
+import { RoleSwitcher } from "@/components/role-switcher";
 
 export default async function AppLayout({
   children,
@@ -10,6 +11,7 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const profile = await requireAuth("/app");
+  const modes = await getAvailableModes(profile);
 
   return (
     <div className="min-h-[100svh] flex flex-col">
@@ -70,6 +72,7 @@ export default async function AppLayout({
           )}
 
           <div className="flex items-center gap-6">
+            <RoleSwitcher modes={modes} current="student" />
             <p className="hidden sm:block text-sm text-bone-mute">
               <span className="text-bone">{profile.full_name}</span>
             </p>

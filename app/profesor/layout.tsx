@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
-import { requireTeacher } from "@/lib/auth";
+import { requireTeacher, getAvailableModes } from "@/lib/auth";
 import { signOutAction } from "@/app/auth/actions";
+import { RoleSwitcher } from "@/components/role-switcher";
 
 export default async function ProfesorLayout({
   children,
@@ -10,6 +11,7 @@ export default async function ProfesorLayout({
   children: React.ReactNode;
 }) {
   const profile = await requireTeacher("/profesor");
+  const modes = await getAvailableModes(profile);
 
   return (
     <div className="min-h-[100svh] flex flex-col">
@@ -31,6 +33,7 @@ export default async function ProfesorLayout({
           </Link>
 
           <div className="flex items-center gap-6">
+            <RoleSwitcher modes={modes} current="teacher" />
             <p className="text-sm text-bone-mute">
               <span className="text-bone">{profile.full_name}</span>
             </p>

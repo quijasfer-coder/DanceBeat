@@ -90,3 +90,46 @@ export async function requireTeacher(redirectTo: string): Promise<Profile> {
   }
   return profile;
 }
+
+export type AppMode = "admin" | "teacher" | "student";
+
+export interface ModeOption {
+  mode: AppMode;
+  href: string;
+  label: string;
+}
+
+const MODE_META: Record<AppMode, { href: string; label: string }> = {
+  admin: { href: "/admin", label: "Admin" },
+  teacher: { href: "/profesor", label: "Profesor" },
+  student: { href: "/app", label: "Alumno" },
+};
+
+/**
+ * Modos (admin/profesor/alumno) a los que este profile tiene acceso real
+ * hoy mismo, para mostrar el selector de modo solo cuando aplica y solo
+ * con destinos que no lo manden a una pantalla de "no vinculado".
+ */
+export async function getAvailableModes(
+  profile: Profile,
+): Promise<ModeOption[]> {
+  const modes: AppMode[] = [];
+
+  if (profile.role === "admin") modes.push("admin");
+
+  if (profile.role === "admin" || profile.role === "teacher") {
+    const supabase = await createClient();
+    const { data: teacher } = await supabase
+      .from("teachers")
+      .select("id")
+      .eq("profile_id", profile.id)
+      .maybeSingle();
+    if (teacher) modes.push("teacher");
+  }
+
+  if (profile.account_status === "approved" && profile.enrolled_at) {
+    modes.push("student");
+  }
+
+  return modes.map((mode) => ({ mode, ...MODE_META[mode] }));
+}
