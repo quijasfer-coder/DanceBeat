@@ -189,23 +189,41 @@ export async function createClassAction(
   }
 
   // Crear un registro de clase por cada día seleccionado
-  const { error: classErr } = await supabase.from("classes").insert(
-    daysOfWeek.map((day) => ({
-      style_id: styleId,
-      studio_id: studioId,
-      teacher_id: teacherId,
-      day_of_week: day,
-      starts_at_time: startsAtTime,
-      duration_min: isNaN(durationMin) ? 60 : durationMin,
-      level,
-      capacity,
-      age_min: ageMinStr ? parseInt(ageMinStr, 10) : null,
-      age_max: ageMaxStr ? parseInt(ageMaxStr, 10) : null,
-      is_active: isActive,
-    })),
-  );
+  const { data: createdClasses, error: classErr } = await supabase
+    .from("classes")
+    .insert(
+      daysOfWeek.map((day) => ({
+        style_id: styleId,
+        studio_id: studioId,
+        teacher_id: teacherId,
+        day_of_week: day,
+        starts_at_time: startsAtTime,
+        duration_min: isNaN(durationMin) ? 60 : durationMin,
+        level,
+        capacity,
+        age_min: ageMinStr ? parseInt(ageMinStr, 10) : null,
+        age_max: ageMaxStr ? parseInt(ageMaxStr, 10) : null,
+        is_active: isActive,
+      })),
+    )
+    .select("id");
 
   if (classErr) return { error: `Class: ${classErr.message}` };
+
+  // Generar las próximas semanas de sesiones fechadas para que las clases
+  // activas aparezcan de inmediato en /app/reservar (sin esto, la clase
+  // queda "activa" pero invisible para las alumnas hasta que alguien
+  // dispare ensure_class_sessions manualmente desde /profesor).
+  if (isActive) {
+    await Promise.all(
+      (createdClasses ?? []).map((c) =>
+        supabase.rpc("ensure_class_sessions", {
+          p_class_id: c.id,
+          p_weeks_ahead: 4,
+        }),
+      ),
+    );
+  }
 
   revalidatePath("/", "layout");
   revalidatePath("/clases");
@@ -283,6 +301,15 @@ export async function toggleClassActiveAction(
   const supabase = await createClient();
 
   await supabase.from("classes").update({ is_active: newValue }).eq("id", classId);
+
+  // Al reactivar, aseguramos que existan sesiones fechadas próximas
+  // (una clase puede llevar semanas pausada y quedarse sin sesiones futuras).
+  if (newValue) {
+    await supabase.rpc("ensure_class_sessions", {
+      p_class_id: classId,
+      p_weeks_ahead: 4,
+    });
+  }
 
   revalidatePath("/", "layout");
   revalidatePath("/clases");
