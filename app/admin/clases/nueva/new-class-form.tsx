@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { Save, AlertCircle, Check } from "lucide-react";
+import { Save, AlertCircle } from "lucide-react";
 import {
   createClassAction,
   type AdminFormState,
@@ -10,18 +10,9 @@ import {
 import type { Database } from "@/lib/database.types";
 import { CoverUploader } from "../cover-uploader";
 import { cn } from "@/lib/utils";
+import { DayPicker } from "../day-picker";
 
 type DanceLevel = Database["public"]["Enums"]["dance_level"];
-
-const dayOptions = [
-  { value: 1, label: "Lunes" },
-  { value: 2, label: "Martes" },
-  { value: 3, label: "Miércoles" },
-  { value: 4, label: "Jueves" },
-  { value: 5, label: "Viernes" },
-  { value: 6, label: "Sábado" },
-  { value: 0, label: "Domingo" },
-];
 
 const levelOptions: { value: DanceLevel; label: string }[] = [
   { value: "principiante", label: "Principiante" },
@@ -37,37 +28,6 @@ const labelClass =
 const helpClass = "text-xs text-bone-mute mt-2 leading-relaxed";
 const sectionLabelClass =
   "font-mono text-[10px] uppercase tracking-[0.3em] text-lumen mb-2";
-
-function DayPicker({ selected, onChange }: { selected: number[]; onChange: (days: number[]) => void }) {
-  function toggle(val: number) {
-    onChange(
-      selected.includes(val) ? selected.filter((d) => d !== val) : [...selected, val],
-    );
-  }
-  return (
-    <div className="flex flex-wrap gap-2">
-      {dayOptions.map((d) => {
-        const active = selected.includes(d.value);
-        return (
-          <button
-            key={d.value}
-            type="button"
-            onClick={() => toggle(d.value)}
-            className={cn(
-              "relative px-4 py-2 rounded-lg text-sm font-medium border transition-colors",
-              active
-                ? "bg-lumen text-ink border-lumen"
-                : "border-bone-border/40 text-bone-mute hover:border-bone hover:text-bone",
-            )}
-          >
-            {active && <Check className="inline w-3 h-3 mr-1.5 -mt-0.5" />}
-            {d.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 export function NewClassForm({
   styles,

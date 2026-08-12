@@ -17,6 +17,7 @@ export type AdminFormState = { error?: string; success?: string } | null;
 export async function updateClassAction(
   classId: string,
   styleId: string,
+  originalDayOfWeek: number,
   _prev: AdminFormState,
   formData: FormData,
 ): Promise<AdminFormState> {
@@ -34,7 +35,6 @@ export async function updateClassAction(
   const studioId = (formData.get("studio_id") as string) || null;
   const teacherIdRaw = (formData.get("teacher_id") as string) ?? "";
   const teacherId = teacherIdRaw && teacherIdRaw !== "none" ? teacherIdRaw : null;
-  const dayOfWeek = parseInt(formData.get("day_of_week") as string, 10);
   const startsAtTime = (formData.get("starts_at_time") as string)?.trim();
   const durationMin = parseInt(formData.get("duration_min") as string, 10);
   const level = formData.get("level") as DanceLevel;
@@ -43,7 +43,25 @@ export async function updateClassAction(
   const ageMaxStr = (formData.get("age_max") as string)?.trim();
   const isActive = formData.get("is_active") === "on";
 
-  if (!styleName || !studioId || !startsAtTime || isNaN(dayOfWeek) || isNaN(capacity)) {
+  // El DayPicker manda todos los días marcados en un solo campo. Esta fila
+  // (classId) se queda con el día original si sigue marcado; si lo quitaron,
+  // se mueve al primer día que haya quedado. El resto de los días marcados
+  // se crean como clases hermanas nuevas (mismo patrón que createClassAction).
+  const selectedDays = formData
+    .getAll("days_of_week")
+    .map((d) => parseInt(d as string, 10))
+    .filter((d) => !isNaN(d));
+
+  if (selectedDays.length === 0) {
+    return { error: "Selecciona al menos un día de la semana." };
+  }
+
+  const dayOfWeek = selectedDays.includes(originalDayOfWeek)
+    ? originalDayOfWeek
+    : selectedDays[0];
+  const addDaysOfWeek = selectedDays.filter((d) => d !== dayOfWeek);
+
+  if (!styleName || !studioId || !startsAtTime || isNaN(capacity)) {
     return { error: "Faltan campos obligatorios." };
   }
 
@@ -79,6 +97,44 @@ export async function updateClassAction(
     .eq("id", classId);
 
   if (classError) return { error: `Class: ${classError.message}` };
+
+  // 3. Días adicionales: crear una clase hermana por cada día marcado en
+  // "Agregar a otro día", clonando los mismos datos de sucursal/coreógrafo/
+  // horario/cupo que se acaban de guardar arriba. Quedan como filas
+  // independientes en `classes` (mismo modelo que "Crear clase nueva").
+  if (addDaysOfWeek.length > 0) {
+    const { data: createdClasses, error: addDaysError } = await supabase
+      .from("classes")
+      .insert(
+        addDaysOfWeek.map((day) => ({
+          style_id: styleId,
+          studio_id: studioId,
+          teacher_id: teacherId,
+          day_of_week: day,
+          starts_at_time: startsAtTime,
+          duration_min: durationMin,
+          level,
+          capacity,
+          age_min: ageMinStr ? parseInt(ageMinStr, 10) : null,
+          age_max: ageMaxStr ? parseInt(ageMaxStr, 10) : null,
+          is_active: isActive,
+        })),
+      )
+      .select("id");
+
+    if (addDaysError) return { error: `Días adicionales: ${addDaysError.message}` };
+
+    if (isActive) {
+      await Promise.all(
+        (createdClasses ?? []).map((c) =>
+          supabase.rpc("ensure_class_sessions", {
+            p_class_id: c.id,
+            p_weeks_ahead: 4,
+          }),
+        ),
+      );
+    }
+  }
 
   // Invalida caché de páginas afectadas
   revalidatePath("/", "layout");

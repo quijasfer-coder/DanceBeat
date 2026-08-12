@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { AlertCircle, Save } from "lucide-react";
 import {
   updateClassAction,
@@ -8,6 +8,7 @@ import {
 } from "@/app/admin/actions";
 import type { Database } from "@/lib/database.types";
 import { CoverUploader } from "../../cover-uploader";
+import { DayPicker, dayOptions } from "../../day-picker";
 
 type DanceLevel = Database["public"]["Enums"]["dance_level"];
 
@@ -38,16 +39,6 @@ type Props = {
   teachers: { id: string; full_name: string }[];
 };
 
-const dayOptions = [
-  { value: 1, label: "Lunes" },
-  { value: 2, label: "Martes" },
-  { value: 3, label: "Miércoles" },
-  { value: 4, label: "Jueves" },
-  { value: 5, label: "Viernes" },
-  { value: 6, label: "Sábado" },
-  { value: 0, label: "Domingo" },
-];
-
 const levelOptions: { value: DanceLevel; label: string }[] = [
   { value: "principiante", label: "Principiante" },
   { value: "intermedio", label: "Intermedio" },
@@ -74,11 +65,12 @@ export function EditClassForm({
   studios,
   teachers,
 }: Props) {
-  const action = updateClassAction.bind(null, classId, styleId);
+  const action = updateClassAction.bind(null, classId, styleId, initial.day_of_week);
   const [state, formAction, pending] = useActionState<AdminFormState, FormData>(
     action,
     null,
   );
+  const [selectedDays, setSelectedDays] = useState<number[]>([initial.day_of_week]);
 
   return (
     <form action={formAction} className="space-y-12">
@@ -258,27 +250,25 @@ export function EditClassForm({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="day_of_week" className={labelClass}>
-                Día de la semana
-              </label>
-              <select
-                id="day_of_week"
-                name="day_of_week"
-                defaultValue={initial.day_of_week}
-                className={inputClass}
-                required
-              >
-                {dayOptions.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>Días de la semana</label>
+              <DayPicker selected={selectedDays} onChange={setSelectedDays} />
+              {selectedDays.map((d) => (
+                <input key={d} type="hidden" name="days_of_week" value={d} />
+              ))}
+              {selectedDays.length === 0 && (
+                <p className="text-xs text-danger mt-2">
+                  Selecciona al menos un día.
+                </p>
+              )}
               <p className={helpClass}>
-                Día recurrente. Una clase puede tener un solo día — si la
-                misma clase se da en varios días (ej. Heels martes Y jueves),
-                hay que crear una clase por día. Cuéntale al desarrollador.
+                Días en que se imparte esta clase, a la misma hora, sucursal,
+                coreógrafo y cupo de abajo. Si agregas un día que esta clase
+                no tenía (ej. Heels también los jueves), se crea una clase
+                nueva para ese día — después puedes editarla aparte si
+                necesita otro cupo u otro coreógrafo. Si quitas el día{" "}
+                {dayOptions.find((d) => d.value === initial.day_of_week)?.label},
+                esta clase se mueve al siguiente día que dejes marcado.
               </p>
             </div>
             <div>
