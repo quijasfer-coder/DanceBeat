@@ -64,15 +64,79 @@ export async function sendEmail({
   }
 }
 
-const brandHtmlWrapper = (bodyHtml: string) => `
-<div style="background:#000000;padding:40px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:480px;margin:0 auto;background:#0a0a0a;border:1px solid #3a3737;border-radius:16px;padding:36px 32px;">
-    <p style="font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#a8a8a8;margin:0 0 24px;">
-      Dance Beat Academy
-    </p>
-    ${bodyHtml}
-  </div>
-</div>
+/**
+ * Envoltura de marca para correos — replica la paleta "Lumen" del sitio
+ * (ink negro, acento lila, tipografía editorial) con HTML de tablas para
+ * que se vea consistente entre clientes de correo (Gmail, Outlook, Apple
+ * Mail), que no soportan CSS moderno de forma confiable.
+ */
+const brandHtmlWrapper = ({
+  eyebrow,
+  bodyHtml,
+}: {
+  eyebrow: string;
+  bodyHtml: string;
+}) => `
+<!doctype html>
+<html lang="es">
+  <body style="margin:0;padding:0;background-color:#000000;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;">
+      <tr>
+        <td align="center" style="padding:48px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+
+            <!-- Wordmark -->
+            <tr>
+              <td style="padding:0 4px 28px;">
+                <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#ffffff;">
+                  Dance<span style="color:#b8a4ff;font-style:italic;">Beat</span>
+                </span>
+              </td>
+            </tr>
+
+            <!-- Card -->
+            <tr>
+              <td bgcolor="#0a0a0a" style="background-color:#0a0a0a;border:1px solid #3a3737;border-radius:20px;padding:40px 36px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding-bottom:18px;">
+                      <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#b8a4ff;font-weight:600;">
+                        ${eyebrow}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr><td>${bodyHtml}</td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:24px 4px 0;">
+                <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:11px;line-height:1.6;color:#5c5757;">
+                  Dance Beat Academy · Av. Stim &amp; Cumbres International School
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`;
+
+const ctaButton = (href: string, label: string) => `
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 4px;">
+    <tr>
+      <td bgcolor="#b8a4ff" style="background-color:#b8a4ff;border-radius:100px;">
+        <a href="${href}" style="display:inline-block;padding:13px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:600;color:#000000;text-decoration:none;">
+          ${label}
+        </a>
+      </td>
+    </tr>
+  </table>
 `;
 
 /**
@@ -84,30 +148,35 @@ export async function sendTeacherWelcomeEmail(to: {
   email: string;
   name: string;
 }) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://dancebeatacademy.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://dancebeat.studio";
   const loginUrl = `${siteUrl}/profesor`;
   const subject = "Ya eres profesor/a en Dance Beat Academy";
+  const firstName = to.name.trim().split(/\s+/)[0] || to.name;
 
-  const html = brandHtmlWrapper(`
-    <h1 style="font-size:24px;color:#ffffff;margin:0 0 16px;font-weight:600;">
-      ¡Hola, ${to.name}!
-    </h1>
-    <p style="font-size:15px;line-height:1.6;color:#e5e5e5;margin:0 0 16px;">
-      Te acabamos de dar de alta como profesor/a en <strong>Dance Beat Academy</strong>.
-      Ya puedes entrar a tu panel para ver tus clases, generar tus sesiones y tomar
-      lista de tus alumnas.
-    </p>
-    <a href="${loginUrl}" style="display:inline-block;background:#b8a4ff;color:#000000;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:100px;margin:8px 0 20px;">
-      Entrar a mi panel
-    </a>
-    <p style="font-size:13px;line-height:1.6;color:#a8a8a8;margin:0;">
-      Si no reconoces esta cuenta o crees que es un error, contáctanos.
-    </p>
-  `);
+  const html = brandHtmlWrapper({
+    eyebrow: "Bienvenida al equipo",
+    bodyHtml: `
+      <h1 style="margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.15;color:#ffffff;font-weight:400;">
+        ¡Hola, ${firstName}!<br/>Ya eres profesora en Dance&nbsp;Beat.
+      </h1>
+      <p style="margin:0 0 26px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:15px;line-height:1.65;color:#c9c9c9;">
+        Te acabamos de dar de alta como profesora en Dance Beat Academy. Desde tu
+        panel puedes ver tus clases asignadas, generar las sesiones de la semana
+        y tomar lista de tus alumnas.
+      </p>
+      ${ctaButton(loginUrl, "Entrar a mi panel →")}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:30px;">
+        <tr><td style="border-top:1px solid #2a2727;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+      </table>
+      <p style="margin:22px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:12.5px;line-height:1.6;color:#8a8a8a;">
+        Si no reconoces esta cuenta o crees que es un error, contáctanos y lo revisamos.
+      </p>
+    `,
+  });
 
-  const text = `¡Hola, ${to.name}!
+  const text = `¡Hola, ${firstName}!
 
-Te acabamos de dar de alta como profesor/a en Dance Beat Academy. Ya puedes entrar a tu panel: ${loginUrl}
+Ya eres profesora en Dance Beat Academy. Entra a tu panel: ${loginUrl}
 
 Si no reconoces esta cuenta o crees que es un error, contáctanos.`;
 
