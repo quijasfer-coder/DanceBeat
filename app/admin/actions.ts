@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { sendTeacherWelcomeEmail } from "@/lib/email";
 import type { Database } from "@/lib/database.types";
 
 type DanceLevel = Database["public"]["Enums"]["dance_level"];
@@ -456,7 +457,7 @@ export async function createTeacherAction(
   if (email) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, role")
+      .select("id, role, email, full_name")
       .eq("email", email)
       .maybeSingle();
 
@@ -469,6 +470,11 @@ export async function createTeacherAction(
           .eq("id", profile.id);
         if (roleErr) return { error: `Profile: ${roleErr.message}` };
       }
+      // No bloquea el alta si el correo falla — solo se loguea.
+      await sendTeacherWelcomeEmail({
+        email: profile.email,
+        name: profile.full_name || fullName,
+      });
     } else {
       warning = `No existe un usuario registrado con ${email}. Pídele que cree su cuenta en /auth/registro con ese mismo email para vincularlo.`;
     }
@@ -512,7 +518,7 @@ export async function linkTeacherProfileAction(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("id, role, email, full_name")
     .eq("email", email)
     .maybeSingle();
 
@@ -546,6 +552,12 @@ export async function linkTeacherProfileAction(
       .eq("id", profile.id);
     if (rErr) return { error: `Profile: ${rErr.message}` };
   }
+
+  // No bloquea la vinculación si el correo falla — solo se loguea.
+  await sendTeacherWelcomeEmail({
+    email: profile.email,
+    name: profile.full_name || email,
+  });
 
   revalidatePath("/admin/coreografos");
   redirect("/admin/coreografos?saved=1");
