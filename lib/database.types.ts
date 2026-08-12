@@ -676,14 +676,23 @@ export type Database = {
           account_id: string
           birthdate: string
           created_at: string
+          curp_pdf_path: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          father_name: string | null
+          father_phone: string | null
           full_name: string
           grade: string | null
           id: string
           is_active: boolean
           is_self: boolean
+          mother_name: string | null
+          mother_phone: string | null
           notes: string | null
           phone: string | null
           photo_url: string | null
+          photo_video_consent: boolean
+          photo_video_consent_at: string | null
           school: string | null
           updated_at: string
         }
@@ -691,14 +700,23 @@ export type Database = {
           account_id: string
           birthdate: string
           created_at?: string
+          curp_pdf_path?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          father_name?: string | null
+          father_phone?: string | null
           full_name: string
           grade?: string | null
           id?: string
           is_active?: boolean
           is_self?: boolean
+          mother_name?: string | null
+          mother_phone?: string | null
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
+          photo_video_consent?: boolean
+          photo_video_consent_at?: string | null
           school?: string | null
           updated_at?: string
         }
@@ -706,14 +724,23 @@ export type Database = {
           account_id?: string
           birthdate?: string
           created_at?: string
+          curp_pdf_path?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          father_name?: string | null
+          father_phone?: string | null
           full_name?: string
           grade?: string | null
           id?: string
           is_active?: boolean
           is_self?: boolean
+          mother_name?: string | null
+          mother_phone?: string | null
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
+          photo_video_consent?: boolean
+          photo_video_consent_at?: string | null
           school?: string | null
           updated_at?: string
         }

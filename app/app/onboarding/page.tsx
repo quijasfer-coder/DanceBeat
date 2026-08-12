@@ -29,6 +29,7 @@ export default async function OnboardingPage() {
       </div>
 
       <OnboardingForm
+        accountId={profile.id}
         accountHolderName={profile.full_name}
         accountHolderPhone={profile.phone ?? ""}
       />

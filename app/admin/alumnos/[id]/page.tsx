@@ -10,8 +10,12 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  FileText,
+  ShieldCheck,
+  ShieldOff,
+  Users,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { getSetting } from "@/lib/queries/settings";
 import { formatMxn } from "@/lib/format";
@@ -53,6 +57,18 @@ export default async function AdminAlumnoDetailPage({
     .maybeSingle();
 
   if (!student) notFound();
+
+  // El PDF de la CURP vive en un bucket privado — hay que generar un
+  // signed URL para poder mostrarlo (getPublicUrl no serviría, el bucket
+  // no es público).
+  let curpSignedUrl: string | null = null;
+  if (student.curp_pdf_path) {
+    const admin = createAdminClient();
+    const { data: signed } = await admin.storage
+      .from("student-documents")
+      .createSignedUrl(student.curp_pdf_path, 60 * 10);
+    curpSignedUrl = signed?.signedUrl ?? null;
+  }
 
   const [profileRes, plansRes, subsRes, enrollmentFeeRaw] = await Promise.all([
     supabase
@@ -274,6 +290,93 @@ export default async function AdminAlumnoDetailPage({
           </p>
         </div>
       )}
+
+      {/* Familia, contacto de emergencia, CURP y consentimiento de fotos */}
+      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+        <div className="glass rounded-2xl p-5">
+          <p className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-bone-mute mb-3">
+            <Users className="w-3.5 h-3.5" />
+            Familia y contacto de emergencia
+          </p>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between gap-3">
+              <span className="text-bone-mute">Emergencia</span>
+              <span className="text-bone text-right">
+                {student.emergency_contact_name || "—"}
+                {student.emergency_contact_phone && (
+                  <span className="text-bone-mute">
+                    {" "}
+                    · {student.emergency_contact_phone}
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-bone-mute">Mamá</span>
+              <span className="text-bone text-right">
+                {student.mother_name || "—"}
+                {student.mother_phone && (
+                  <span className="text-bone-mute"> · {student.mother_phone}</span>
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-bone-mute">Papá</span>
+              <span className="text-bone text-right">
+                {student.father_name || "—"}
+                {student.father_phone && (
+                  <span className="text-bone-mute"> · {student.father_phone}</span>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass rounded-2xl p-5">
+          <p className="text-xs font-mono uppercase tracking-widest text-bone-mute mb-3">
+            CURP y consentimiento
+          </p>
+          <div className="space-y-3 text-sm">
+            {curpSignedUrl ? (
+              <a
+                href={curpSignedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-bone hover:text-lumen transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Ver PDF de la CURP
+              </a>
+            ) : (
+              <p className="flex items-center gap-1.5 text-bone-mute">
+                <FileText className="w-3.5 h-3.5" />
+                Sin CURP subida
+              </p>
+            )}
+            {student.photo_video_consent ? (
+              <p className="flex items-center gap-1.5 text-success">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Autorizó fotos/video
+                {student.photo_video_consent_at && (
+                  <span className="text-bone-mute">
+                    {" "}
+                    ·{" "}
+                    {new Date(student.photo_video_consent_at).toLocaleDateString(
+                      "es-MX",
+                      { day: "numeric", month: "short", year: "numeric" },
+                    )}
+                  </span>
+                )}
+              </p>
+            ) : (
+              <p className="flex items-center gap-1.5 text-bone-mute">
+                <ShieldOff className="w-3.5 h-3.5" />
+                No autorizó fotos/video
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Suscripción activa */}
       <section className="mb-8">

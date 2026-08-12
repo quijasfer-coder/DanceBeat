@@ -15,6 +15,14 @@ export type StudentInput = {
   grade?: string;
   notes?: string;
   is_self?: boolean;
+  curp_pdf_path?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  mother_name?: string;
+  mother_phone?: string;
+  father_name?: string;
+  father_phone?: string;
+  photo_video_consent?: boolean;
 };
 
 /**
@@ -51,16 +59,30 @@ export async function createStudentsAction(
     }
   }
 
-  const rows = students.map((s) => ({
-    account_id: profile.id,
-    full_name: s.full_name.trim(),
-    birthdate: s.birthdate,
-    phone: s.phone?.trim() || null,
-    school: s.school?.trim() || null,
-    grade: s.grade?.trim() || null,
-    notes: s.notes?.trim() || null,
-    is_self: s.is_self === true,
-  }));
+  const now = new Date().toISOString();
+
+  const rows = students.map((s) => {
+    const consent = s.photo_video_consent === true;
+    return {
+      account_id: profile.id,
+      full_name: s.full_name.trim(),
+      birthdate: s.birthdate,
+      phone: s.phone?.trim() || null,
+      school: s.school?.trim() || null,
+      grade: s.grade?.trim() || null,
+      notes: s.notes?.trim() || null,
+      is_self: s.is_self === true,
+      curp_pdf_path: s.curp_pdf_path?.trim() || null,
+      emergency_contact_name: s.emergency_contact_name?.trim() || null,
+      emergency_contact_phone: s.emergency_contact_phone?.trim() || null,
+      mother_name: s.mother_name?.trim() || null,
+      mother_phone: s.mother_phone?.trim() || null,
+      father_name: s.father_name?.trim() || null,
+      father_phone: s.father_phone?.trim() || null,
+      photo_video_consent: consent,
+      photo_video_consent_at: consent ? now : null,
+    };
+  });
 
   const { error } = await supabase.from("students").insert(rows);
 
