@@ -20,11 +20,14 @@ export function CurpUploader({
   accountId,
   fileNamePrefix = "curp",
   onChange,
+  initialViewUrl = null,
 }: {
   accountId: string;
   fileNamePrefix?: string;
   /** Se llama con el path subido (o null si se quita) para que el form padre lo guarde. */
   onChange: (path: string | null) => void;
+  /** Signed URL de un PDF ya subido antes (para "Ver PDF actual" al editar). */
+  initialViewUrl?: string | null;
 }) {
   const [path, setPath] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -104,9 +107,9 @@ export function CurpUploader({
           ) : (
             <Upload className="w-3.5 h-3.5" />
           )}
-          {path ? "Cambiar PDF" : "Subir PDF de la CURP"}
+          {path || initialViewUrl ? "Cambiar PDF" : "Subir PDF de la CURP"}
         </button>
-        {path && (
+        {path ? (
           <>
             <span className="inline-flex items-center gap-1.5 text-xs text-bone-mute">
               <FileText className="w-3.5 h-3.5" />
@@ -122,6 +125,18 @@ export function CurpUploader({
               Quitar
             </button>
           </>
+        ) : (
+          initialViewUrl && (
+            <a
+              href={initialViewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-bone-mute hover:text-lumen transition-colors"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Ver PDF actual
+            </a>
+          )
         )}
       </div>
       <p className="text-[10px] font-mono uppercase tracking-wider text-bone-mute">

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { WelcomeBanner } from "@/components/app/welcome-banner";
 import {
   Calendar,
-  Users,
+  Pencil,
   Plus,
   Sparkles,
   ArrowRight,
@@ -123,7 +123,13 @@ export default async function AppDashboardPage() {
                     )}
                   </div>
                 </div>
-                <Users className="w-5 h-5 text-bone-mute shrink-0" />
+                <Link
+                  href={`/app/alumno/${s.id}/editar`}
+                  className="inline-flex items-center gap-1 text-xs text-bone-mute hover:text-lumen transition-colors shrink-0"
+                  aria-label={`Editar a ${s.full_name}`}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </Link>
               </div>
 
               <dl className="space-y-2 text-sm text-bone-mute">

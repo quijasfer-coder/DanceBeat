@@ -18,12 +18,15 @@ const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 export function StudentPhotoUploader({
   fileNamePrefix = "alumno",
   onChange,
+  initialUrl = null,
 }: {
   fileNamePrefix?: string;
   /** Se llama con la URL pública subida (o null si se quita). */
   onChange: (url: string | null) => void;
+  /** URL de una foto ya subida antes (al editar un alumno existente). */
+  initialUrl?: string | null;
 }) {
-  const [url, setUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(initialUrl);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);

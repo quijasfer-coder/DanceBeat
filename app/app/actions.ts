@@ -95,3 +95,70 @@ export async function createStudentsAction(
   revalidatePath("/app", "layout");
   redirect("/app");
 }
+
+export type UpdateStudentState = { error?: string } | null;
+
+/**
+ * Edita un alumno ya existente — el titular de la cuenta puede completar
+ * o corregir datos después del onboarding (foto, CURP, contacto de
+ * emergencia, padres, etc.) sin tener que recrear al alumno.
+ */
+export async function updateStudentAction(
+  studentId: string,
+  _prev: UpdateStudentState,
+  formData: FormData,
+): Promise<UpdateStudentState> {
+  const profile = await requireAuth(`/app/alumno/${studentId}/editar`);
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("students")
+    .select("id, account_id, photo_video_consent")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (!existing || existing.account_id !== profile.id) {
+    return { error: "No se encontró ese alumno en tu cuenta." };
+  }
+
+  const fullName = (formData.get("full_name") as string)?.trim();
+  const birthdate = (formData.get("birthdate") as string)?.trim();
+  if (!fullName || !birthdate) {
+    return { error: "Nombre y fecha de nacimiento son obligatorios." };
+  }
+
+  const consent = formData.get("photo_video_consent") === "on";
+  const consentChanged = consent !== existing.photo_video_consent;
+
+  const { error } = await supabase
+    .from("students")
+    .update({
+      full_name: fullName,
+      birthdate,
+      phone: ((formData.get("phone") as string) ?? "").trim() || null,
+      school: ((formData.get("school") as string) ?? "").trim() || null,
+      grade: ((formData.get("grade") as string) ?? "").trim() || null,
+      notes: ((formData.get("notes") as string) ?? "").trim() || null,
+      photo_url: ((formData.get("photo_url") as string) ?? "").trim() || null,
+      curp_pdf_path:
+        ((formData.get("curp_pdf_path") as string) ?? "").trim() || null,
+      emergency_contact_name:
+        ((formData.get("emergency_contact_name") as string) ?? "").trim() || null,
+      emergency_contact_phone:
+        ((formData.get("emergency_contact_phone") as string) ?? "").trim() || null,
+      mother_name: ((formData.get("mother_name") as string) ?? "").trim() || null,
+      mother_phone: ((formData.get("mother_phone") as string) ?? "").trim() || null,
+      father_name: ((formData.get("father_name") as string) ?? "").trim() || null,
+      father_phone: ((formData.get("father_phone") as string) ?? "").trim() || null,
+      photo_video_consent: consent,
+      ...(consentChanged
+        ? { photo_video_consent_at: consent ? new Date().toISOString() : null }
+        : {}),
+    })
+    .eq("id", studentId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/app", "layout");
+  redirect("/app");
+}
