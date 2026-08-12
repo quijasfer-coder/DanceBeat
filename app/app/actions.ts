@@ -15,6 +15,7 @@ export type StudentInput = {
   grade?: string;
   notes?: string;
   is_self?: boolean;
+  photo_url?: string;
   curp_pdf_path?: string;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
@@ -72,6 +73,7 @@ export async function createStudentsAction(
       grade: s.grade?.trim() || null,
       notes: s.notes?.trim() || null,
       is_self: s.is_self === true,
+      photo_url: s.photo_url?.trim() || null,
       curp_pdf_path: s.curp_pdf_path?.trim() || null,
       emergency_contact_name: s.emergency_contact_name?.trim() || null,
       emergency_contact_phone: s.emergency_contact_phone?.trim() || null,

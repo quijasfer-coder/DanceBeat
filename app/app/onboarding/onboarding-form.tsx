@@ -9,6 +9,7 @@ import {
 } from "@/app/app/actions";
 import { cn } from "@/lib/utils";
 import { CurpUploader } from "./curp-uploader";
+import { StudentPhotoUploader } from "./student-photo-uploader";
 
 type Props = {
   accountId: string;
@@ -27,6 +28,7 @@ type StudentDraft = {
   grade: string;
   notes: string;
   curp_pdf_path: string;
+  photo_url: string;
 };
 
 const inputClass =
@@ -44,6 +46,7 @@ const newDraft = (): StudentDraft => ({
   grade: "",
   notes: "",
   curp_pdf_path: "",
+  photo_url: "",
 });
 
 export function OnboardingForm({
@@ -55,6 +58,7 @@ export function OnboardingForm({
   const [selfBirthdate, setSelfBirthdate] = useState("");
   const [selfNotes, setSelfNotes] = useState("");
   const [selfCurpPath, setSelfCurpPath] = useState("");
+  const [selfPhotoUrl, setSelfPhotoUrl] = useState("");
   const [kids, setKids] = useState<StudentDraft[]>([newDraft()]);
 
   // Datos de familia — se capturan una sola vez y aplican a todos los
@@ -106,6 +110,7 @@ export function OnboardingForm({
         phone: accountHolderPhone,
         notes: selfNotes,
         curp_pdf_path: selfCurpPath,
+        photo_url: selfPhotoUrl,
         is_self: true,
         ...family,
       });
@@ -122,6 +127,7 @@ export function OnboardingForm({
           grade: k.grade,
           notes: k.notes,
           curp_pdf_path: k.curp_pdf_path,
+          photo_url: k.photo_url,
           is_self: false,
           ...family,
         });
@@ -183,6 +189,13 @@ export function OnboardingForm({
           <div className="flex items-center gap-2 mb-5">
             <User className="w-4 h-4 text-lumen" />
             <p className="font-display text-xl">Tú — {accountHolderName}</p>
+          </div>
+
+          <div className="mb-6">
+            <StudentPhotoUploader
+              fileNamePrefix={accountHolderName}
+              onChange={(u) => setSelfPhotoUrl(u ?? "")}
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -274,6 +287,11 @@ export function OnboardingForm({
                     </button>
                   )}
                 </div>
+
+                <StudentPhotoUploader
+                  fileNamePrefix={k.full_name || `hijo-${idx + 1}`}
+                  onChange={(u) => updateKid(k.id, "photo_url", u ?? "")}
+                />
 
                 <div>
                   <label className={labelClass}>Nombre completo</label>

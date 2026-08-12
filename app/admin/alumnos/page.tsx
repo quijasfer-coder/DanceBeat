@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, User, Phone, Mail, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DeactivateStudent } from "@/components/admin/deactivate-student";
+import { Avatar } from "@/components/avatar";
 
 export const metadata = {
   title: "Admin · Alumnos",
@@ -130,17 +131,22 @@ export default async function AdminAlumnosPage({
                     className="border-t border-bone-border/30 hover:bg-ink-off/50 transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <Link
-                        href={`/admin/alumnos/${s.id}`}
-                        className="font-display text-base text-bone hover:text-lumen transition-colors"
-                      >
-                        {s.full_name}
-                      </Link>
-                      {s.is_self && (
-                        <p className="font-mono text-[10px] uppercase tracking-wider text-lumen mt-1">
-                          es el titular
-                        </p>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <Avatar src={s.photo_url} name={s.full_name} size={36} />
+                        <div>
+                          <Link
+                            href={`/admin/alumnos/${s.id}`}
+                            className="font-display text-base text-bone hover:text-lumen transition-colors"
+                          >
+                            {s.full_name}
+                          </Link>
+                          {s.is_self && (
+                            <p className="font-mono text-[10px] uppercase tracking-wider text-lumen mt-1">
+                              es el titular
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span className="font-mono">{age} años</span>

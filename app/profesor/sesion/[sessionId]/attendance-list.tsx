@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Check, X, AlertCircle, Loader2 } from "lucide-react";
 import { markAttendanceAction } from "@/app/profesor/actions";
 import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/avatar";
 import type { Database } from "@/lib/database.types";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
@@ -12,6 +13,7 @@ type Item = {
   bookingId: string;
   status: BookingStatus;
   studentName: string;
+  photoUrl: string | null;
   birthdate: string;
   school: string | null;
   grade: string | null;
@@ -86,20 +88,23 @@ export function AttendanceList({
                 : "border-bone-border/30 bg-ink-off",
             )}
           >
-            <div className="flex-1 min-w-0">
-              <p className="font-display text-lg text-bone">
-                {it.studentName}
-              </p>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-bone-mute mt-1">
-                {age} años
-                {it.school ? ` · ${it.school}` : ""}
-                {it.grade ? ` · ${it.grade}` : ""}
-              </p>
-              {it.notes && (
-                <p className="text-xs text-warning mt-1.5 leading-relaxed">
-                  ⚠ {it.notes}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Avatar src={it.photoUrl} name={it.studentName} size={44} />
+              <div className="min-w-0">
+                <p className="font-display text-lg text-bone truncate">
+                  {it.studentName}
                 </p>
-              )}
+                <p className="font-mono text-[10px] uppercase tracking-wider text-bone-mute mt-1">
+                  {age} años
+                  {it.school ? ` · ${it.school}` : ""}
+                  {it.grade ? ` · ${it.grade}` : ""}
+                </p>
+                {it.notes && (
+                  <p className="text-xs text-warning mt-1.5 leading-relaxed">
+                    ⚠ {it.notes}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">

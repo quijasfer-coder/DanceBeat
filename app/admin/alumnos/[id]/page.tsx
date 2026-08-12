@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { Avatar } from "@/components/avatar";
 import { requireAdmin } from "@/lib/auth";
 import { getSetting } from "@/lib/queries/settings";
 import { formatMxn } from "@/lib/format";
@@ -138,16 +139,19 @@ export default async function AdminAlumnoDetailPage({
         Volver al listado
       </Link>
 
-      <div className="mb-10">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute">
-          Alumno · {age} años
-        </p>
-        <h1 className="font-display text-5xl mt-2">{student.full_name}</h1>
-        {student.is_self && (
-          <p className="font-mono text-[10px] uppercase tracking-wider text-lumen mt-2">
-            Es el titular de la cuenta
+      <div className="mb-10 flex items-center gap-5">
+        <Avatar src={student.photo_url} name={student.full_name} size={72} />
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute">
+            Alumno · {age} años
           </p>
-        )}
+          <h1 className="font-display text-5xl mt-2">{student.full_name}</h1>
+          {student.is_self && (
+            <p className="font-mono text-[10px] uppercase tracking-wider text-lumen mt-2">
+              Es el titular de la cuenta
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Estado de la cuenta del titular */}

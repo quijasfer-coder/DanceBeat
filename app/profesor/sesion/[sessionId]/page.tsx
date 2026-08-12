@@ -161,6 +161,7 @@ export default async function ProfesorSesionPage({ params }: PageProps) {
             bookingId: it.booking.id,
             status: it.booking.status,
             studentName: it.student!.full_name,
+            photoUrl: it.student!.photo_url,
             birthdate: it.student!.birthdate,
             school: it.student!.school,
             grade: it.student!.grade,

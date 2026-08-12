@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireApprovedAccount } from "@/lib/auth";
+import { Avatar } from "@/components/avatar";
 import {
   getActiveSubscriptionsForStudents,
   getMyActiveBookings,
@@ -111,15 +112,18 @@ export default async function AppDashboardPage() {
               className="rounded-2xl border border-bone-border/30 bg-ink-off p-6"
             >
               <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="font-display text-2xl">{s.full_name}</p>
-                  {s.is_self && (
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-lumen mt-1">
-                      tú mismo
-                    </p>
-                  )}
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar src={s.photo_url} name={s.full_name} size={44} />
+                  <div className="min-w-0">
+                    <p className="font-display text-2xl truncate">{s.full_name}</p>
+                    {s.is_self && (
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-lumen mt-1">
+                        tú mismo
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <Users className="w-5 h-5 text-bone-mute" />
+                <Users className="w-5 h-5 text-bone-mute shrink-0" />
               </div>
 
               <dl className="space-y-2 text-sm text-bone-mute">
