@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Plus,
@@ -10,6 +11,7 @@ import {
   Clock,
   MapPin,
   Users,
+  Zap,
 } from "lucide-react";
 import { assignFixedClassAction, unassignFixedClassAction } from "./actions";
 import { cn } from "@/lib/utils";
@@ -48,10 +50,14 @@ export function FixedClassesSection({
   studentId,
   fixedClasses,
   availableClasses,
+  creditsRemaining,
+  creditsTotal,
 }: {
   studentId: string;
   fixedClasses: FixedClass[];
   availableClasses: ClassOption[];
+  creditsRemaining: number;
+  creditsTotal: number;
 }) {
   const [pending, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -74,7 +80,9 @@ export function FixedClassesSection({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <CreditsCounter remaining={creditsRemaining} total={creditsTotal} />
+
       {fixedClasses.length === 0 ? (
         <p className="text-xs text-bone-mute">Sin clases fijas asignadas.</p>
       ) : (
@@ -110,7 +118,34 @@ export function FixedClassesSection({
         </p>
       )}
 
-      <AddFixedClassButton studentId={studentId} availableClasses={availableClasses} />
+      <AddFixedClassButton
+        studentId={studentId}
+        availableClasses={availableClasses}
+        creditsRemaining={creditsRemaining}
+      />
+    </div>
+  );
+}
+
+function CreditsCounter({
+  remaining,
+  total,
+}: {
+  remaining: number;
+  total: number;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-bone-border/30 bg-ink-off px-4 py-3">
+      <Zap className="w-4 h-4 text-lumen shrink-0" />
+      <div>
+        <p className="font-display text-4xl leading-none text-lumen">
+          {remaining}
+          <span className="text-base text-bone-mute font-body"> / {total}</span>
+        </p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute mt-1">
+          Créditos disponibles
+        </p>
+      </div>
     </div>
   );
 }
@@ -118,9 +153,11 @@ export function FixedClassesSection({
 function AddFixedClassButton({
   studentId,
   availableClasses,
+  creditsRemaining,
 }: {
   studentId: string;
   availableClasses: ClassOption[];
+  creditsRemaining: number;
 }) {
   const [open, setOpen] = useState(false);
   const [dayFilter, setDayFilter] = useState<number | null>(null);
@@ -167,11 +204,12 @@ function AddFixedClassButton({
         Agregar clase fija
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        >
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          >
           <div
             className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-bone-border/40 bg-ink-off shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -184,14 +222,29 @@ function AddFixedClassButton({
                   Elige un día y toca una clase para asignarla.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="text-bone-mute hover:text-bone transition-colors"
-                aria-label="Cerrar"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-4 shrink-0">
+                <div className="text-right">
+                  <p
+                    className={cn(
+                      "font-display text-3xl leading-none",
+                      creditsRemaining > 0 ? "text-lumen" : "text-danger",
+                    )}
+                  >
+                    {creditsRemaining}
+                  </p>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-bone-mute mt-1">
+                    créditos
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="text-bone-mute hover:text-bone transition-colors"
+                  aria-label="Cerrar"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Filtros */}
@@ -307,8 +360,9 @@ function AddFixedClassButton({
               )}
             </div>
           </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

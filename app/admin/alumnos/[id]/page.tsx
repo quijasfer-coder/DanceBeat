@@ -606,6 +606,22 @@ export default async function AdminAlumnoDetailPage({
         )}
       </section>
 
+      {/* Formulario de renovar + cobrar */}
+      <section className="mb-12">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute mb-4">
+          {activeSub ? "Renovar suscripción" : "Crear suscripción"}
+        </p>
+        <div className="glass rounded-2xl p-6">
+          <SubscriptionForm
+            studentId={student.id}
+            plans={plans}
+            defaults={defaults}
+            suggestedAmountCents={suggestedAmountCents}
+            lateFeeApplies={lateFeeApplies}
+          />
+        </div>
+      </section>
+
       {/* Clases fijas */}
       <section className="mb-8">
         <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute mb-2">
@@ -620,22 +636,8 @@ export default async function AdminAlumnoDetailPage({
             studentId={student.id}
             fixedClasses={fixedClasses}
             availableClasses={availableClassesToAssign}
-          />
-        </div>
-      </section>
-
-      {/* Formulario de renovar + cobrar */}
-      <section className="mb-12">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute mb-4">
-          {activeSub ? "Renovar suscripción" : "Crear suscripción"}
-        </p>
-        <div className="glass rounded-2xl p-6">
-          <SubscriptionForm
-            studentId={student.id}
-            plans={plans}
-            defaults={defaults}
-            suggestedAmountCents={suggestedAmountCents}
-            lateFeeApplies={lateFeeApplies}
+            creditsRemaining={activeSub?.credits_remaining ?? 0}
+            creditsTotal={activeSub?.credits_total ?? 0}
           />
         </div>
       </section>
