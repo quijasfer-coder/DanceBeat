@@ -516,11 +516,13 @@ export type Database = {
         Row: {
           account_id: string
           amount_cents: number
+          base_amount_cents: number | null
           created_at: string
           currency: string
           failure_reason: string | null
           id: string
           kind: Database["public"]["Enums"]["payment_kind"]
+          late_fee_cents: number | null
           method: string | null
           paid_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
@@ -531,11 +533,13 @@ export type Database = {
         Insert: {
           account_id: string
           amount_cents: number
+          base_amount_cents?: number | null
           created_at?: string
           currency?: string
           failure_reason?: string | null
           id?: string
           kind: Database["public"]["Enums"]["payment_kind"]
+          late_fee_cents?: number | null
           method?: string | null
           paid_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
@@ -546,11 +550,13 @@ export type Database = {
         Update: {
           account_id?: string
           amount_cents?: number
+          base_amount_cents?: number | null
           created_at?: string
           currency?: string
           failure_reason?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["payment_kind"]
+          late_fee_cents?: number | null
           method?: string | null
           paid_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]

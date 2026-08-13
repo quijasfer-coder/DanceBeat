@@ -72,6 +72,16 @@ export async function renewSubscriptionAction(
   if (studentErr) return { error: studentErr.message };
   if (!studentRow) return { error: "Esa alumna ya no existe." };
 
+  // Precio del plan tal cual está hoy en BD — no confiamos en el monto
+  // que mande el cliente para calcular el desglose del recibo.
+  const { data: planRow } = await supabase
+    .from("plans")
+    .select("price_cents")
+    .eq("id", planId)
+    .maybeSingle();
+  const basePriceCents = planRow?.price_cents ?? amountCents;
+  const lateFeeCents = Math.max(0, amountCents - basePriceCents);
+
   // Cancelar la activa previa (si existe) y crear nueva
   const { error: cancelErr } = await supabase
     .from("subscriptions")
@@ -107,6 +117,8 @@ export async function renewSubscriptionAction(
     subscription_id: newSub.id,
     kind: "monthly",
     amount_cents: amountCents,
+    base_amount_cents: basePriceCents,
+    late_fee_cents: lateFeeCents,
     status: "succeeded",
     method: paymentMethod,
     paid_at: new Date().toISOString(),
@@ -278,7 +290,9 @@ export async function sendPaymentReceiptAction(
 
   const { data: payment, error: paymentErr } = await supabase
     .from("payments")
-    .select("id, account_id, student_id, kind, amount_cents, method, paid_at, subscription_id")
+    .select(
+      "id, account_id, student_id, kind, amount_cents, base_amount_cents, late_fee_cents, method, paid_at, subscription_id",
+    )
     .eq("id", paymentId)
     .maybeSingle();
   if (paymentErr) return { error: paymentErr.message };
@@ -300,7 +314,7 @@ export async function sendPaymentReceiptAction(
     payment.subscription_id
       ? supabase
           .from("subscriptions")
-          .select("plans:plan_id (name)")
+          .select("credits_total, plans:plan_id (name)")
           .eq("id", payment.subscription_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -310,18 +324,23 @@ export async function sendPaymentReceiptAction(
   if (!profile?.email) return { error: "No encontramos el email del titular." };
 
   const studentName = studentRes.data?.full_name ?? "—";
-  const planName =
-    (subRes.data as { plans: { name: string } | null } | null)?.plans?.name ??
-    null;
+  const subData = subRes.data as
+    | { credits_total: number; plans: { name: string } | null }
+    | null;
+  const planName = subData?.plans?.name ?? null;
+  const creditsTotal = subData?.credits_total ?? null;
 
   const res = await sendPaymentReceiptEmail({
     to: { email: profile.email, name: profile.full_name },
     studentName,
     kind: payment.kind,
     amountCents: payment.amount_cents,
+    baseAmountCents: payment.base_amount_cents,
+    lateFeeCents: payment.late_fee_cents,
     method: payment.method,
     paidAt: payment.paid_at,
     planName,
+    creditsTotal,
     folio: payment.id.slice(0, 8).toUpperCase(),
   });
 

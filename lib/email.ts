@@ -218,9 +218,12 @@ export async function sendPaymentReceiptEmail(params: {
   studentName: string;
   kind: string;
   amountCents: number;
+  baseAmountCents?: number | null;
+  lateFeeCents?: number | null;
   method: string | null;
   paidAt: string | null;
   planName?: string | null;
+  creditsTotal?: number | null;
   folio: string;
 }) {
   const {
@@ -228,17 +231,24 @@ export async function sendPaymentReceiptEmail(params: {
     studentName,
     kind,
     amountCents,
+    baseAmountCents,
+    lateFeeCents,
     method,
     paidAt,
     planName,
+    creditsTotal,
     folio,
   } = params;
 
-  const amountFormatted = new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    maximumFractionDigits: 2,
-  }).format(amountCents / 100);
+  const fmt = (cents: number) =>
+    new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      maximumFractionDigits: 2,
+    }).format(cents / 100);
+
+  const amountFormatted = fmt(amountCents);
+  const hasLateFee = !!lateFeeCents && lateFeeCents > 0;
 
   const dateFormatted = paidAt
     ? new Date(paidAt).toLocaleDateString("es-MX", {
@@ -257,6 +267,19 @@ export async function sendPaymentReceiptEmail(params: {
 
   const subject = `Recibo de pago — ${studentName} — ${amountFormatted}`;
 
+  // Desglose: si hubo recargo, se ve "precio del plan" + "recargo" en vez
+  // de un solo renglón de concepto con el total ya mezclado.
+  const breakdownRows = hasLateFee
+    ? `${receiptRow("Concepto", concepto)}
+       ${receiptRow(planName ? "Precio del plan" : "Precio base", fmt(baseAmountCents ?? amountCents - lateFeeCents!))}
+       ${receiptRow("Recargo por pago tardío", `+ ${fmt(lateFeeCents!)}`)}`
+    : receiptRow("Concepto", concepto);
+
+  const creditsRow =
+    creditsTotal !== null && creditsTotal !== undefined
+      ? receiptRow("Créditos incluidos", `${creditsTotal} / mes`)
+      : "";
+
   const html = brandHtmlWrapper({
     eyebrow: "Recibo de pago",
     bodyHtml: `
@@ -271,8 +294,9 @@ export async function sendPaymentReceiptEmail(params: {
         <tr>
           <td>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              ${receiptRow("Concepto", concepto)}
+              ${breakdownRows}
               ${receiptRow("Alumna", studentName)}
+              ${creditsRow}
               ${receiptRow("Método de pago", methodLabel)}
               ${receiptRow("Fecha", dateFormatted)}
               ${receiptRow("Folio", `#${folio}`, true)}
@@ -304,7 +328,11 @@ export async function sendPaymentReceiptEmail(params: {
   const text = `Recibo de pago — Dance Beat Academy
 
 Alumna: ${studentName}
-Concepto: ${concepto}
+Concepto: ${concepto}${
+    hasLateFee
+      ? `\nPrecio del plan: ${fmt(baseAmountCents ?? amountCents - lateFeeCents!)}\nRecargo por pago tardío: + ${fmt(lateFeeCents!)}`
+      : ""
+  }${creditsTotal !== null && creditsTotal !== undefined ? `\nCréditos incluidos: ${creditsTotal} / mes` : ""}
 Método de pago: ${methodLabel}
 Fecha: ${dateFormatted}
 Folio: #${folio}
