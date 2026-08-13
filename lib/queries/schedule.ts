@@ -23,10 +23,11 @@ export async function getActiveClasses(): Promise<ClassWithStyleAndStudio[]> {
       `
       *,
       styles:style_id ( id, slug, name, tagline, cover_url ),
-      studios:studio_id ( id, slug, name )
+      studios:studio_id!inner ( id, slug, name )
       `,
     )
     .eq("is_active", true)
+    .eq("studios.is_public", true)
     .order("day_of_week", { ascending: true })
     .order("starts_at_time", { ascending: true });
 
@@ -48,11 +49,12 @@ export async function getClassesByStyleSlug(
       `
       *,
       styles:style_id!inner ( id, slug, name, tagline, cover_url ),
-      studios:studio_id ( id, slug, name )
+      studios:studio_id!inner ( id, slug, name )
       `,
     )
     .eq("is_active", true)
     .eq("styles.slug", styleSlug)
+    .eq("studios.is_public", true)
     .order("day_of_week", { ascending: true })
     .order("starts_at_time", { ascending: true });
 
