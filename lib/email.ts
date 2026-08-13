@@ -182,3 +182,136 @@ Si no reconoces esta cuenta o crees que es un error, contáctanos.`;
 
   return sendEmail({ to: { email: to.email, name: to.name }, subject, html, text });
 }
+
+const PAYMENT_KIND_LABEL: Record<string, string> = {
+  enrollment: "Inscripción",
+  monthly: "Mensualidad",
+  drop_in: "Clase suelta",
+  late_fee: "Recargo",
+  refund: "Reembolso",
+};
+
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  cash: "Efectivo",
+  transfer: "Transferencia",
+  tpv: "TPV",
+  stripe: "Stripe",
+};
+
+const receiptRow = (label: string, value: string, isLast = false) => `
+  <tr>
+    <td style="padding:12px 0;${isLast ? "" : "border-bottom:1px solid #221f1f;"}font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:#8a8a8a;">
+      ${label}
+    </td>
+    <td align="right" style="padding:12px 0;${isLast ? "" : "border-bottom:1px solid #221f1f;"}font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:14px;color:#f2f2f2;">
+      ${value}
+    </td>
+  </tr>
+`;
+
+/**
+ * Recibo de un pago (inscripción o mensualidad) — lo dispara el admin
+ * manualmente desde el historial de pagos de la alumna.
+ */
+export async function sendPaymentReceiptEmail(params: {
+  to: { email: string; name: string };
+  studentName: string;
+  kind: string;
+  amountCents: number;
+  method: string | null;
+  paidAt: string | null;
+  planName?: string | null;
+  folio: string;
+}) {
+  const {
+    to,
+    studentName,
+    kind,
+    amountCents,
+    method,
+    paidAt,
+    planName,
+    folio,
+  } = params;
+
+  const amountFormatted = new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 2,
+  }).format(amountCents / 100);
+
+  const dateFormatted = paidAt
+    ? new Date(paidAt).toLocaleDateString("es-MX", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "—";
+
+  const kindLabel = PAYMENT_KIND_LABEL[kind] ?? kind;
+  const concepto =
+    kind === "monthly" && planName ? `${kindLabel} — ${planName}` : kindLabel;
+  const methodLabel = method
+    ? (PAYMENT_METHOD_LABEL[method] ?? method)
+    : "—";
+
+  const subject = `Recibo de pago — ${studentName} — ${amountFormatted}`;
+
+  const html = brandHtmlWrapper({
+    eyebrow: "Recibo de pago",
+    bodyHtml: `
+      <h1 style="margin:0 0 8px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.2;color:#ffffff;font-weight:400;">
+        Gracias por tu pago.
+      </h1>
+      <p style="margin:0 0 26px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.6;color:#c9c9c9;">
+        Este es el recibo del pago de <strong style="color:#f2f2f2;">${studentName}</strong> en Dance Beat Academy.
+      </p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#131010;border:1px solid #2a2727;border-radius:14px;padding:22px 24px;">
+        <tr>
+          <td>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              ${receiptRow("Concepto", concepto)}
+              ${receiptRow("Alumna", studentName)}
+              ${receiptRow("Método de pago", methodLabel)}
+              ${receiptRow("Fecha", dateFormatted)}
+              ${receiptRow("Folio", `#${folio}`, true)}
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px;">
+        <tr>
+          <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#8a8a8a;">
+            Total pagado
+          </td>
+        </tr>
+        <tr>
+          <td style="font-family:Georgia,'Times New Roman',serif;font-size:36px;color:#b8a4ff;padding-top:4px;">
+            ${amountFormatted}
+            <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:13px;color:#8a8a8a;"> MXN</span>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:28px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:12.5px;line-height:1.6;color:#8a8a8a;">
+        Si tienes alguna duda sobre este recibo, contáctanos y con gusto te ayudamos.
+      </p>
+    `,
+  });
+
+  const text = `Recibo de pago — Dance Beat Academy
+
+Alumna: ${studentName}
+Concepto: ${concepto}
+Método de pago: ${methodLabel}
+Fecha: ${dateFormatted}
+Folio: #${folio}
+
+Total pagado: ${amountFormatted} MXN
+
+Gracias por tu pago.`;
+
+  return sendEmail({ to, subject, html, text });
+}

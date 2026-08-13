@@ -26,6 +26,7 @@ import { CreditControls } from "./credit-controls";
 import { EnrollmentTypeSelect } from "./enrollment-type-select";
 import { EnrollmentMethodEdit } from "./enrollment-method-edit";
 import { FixedClassesSection } from "./fixed-classes-section";
+import { SendReceiptButton } from "./send-receipt-button";
 import {
   AccountStatusActions,
   MarkEnrollmentPaidActions,
@@ -695,6 +696,7 @@ export default async function AdminAlumnoDetailPage({
                     {p.status}
                   </p>
                 </div>
+                <SendReceiptButton paymentId={p.id} />
               </div>
             ))}
           </div>

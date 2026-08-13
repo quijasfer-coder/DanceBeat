@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { sendPaymentReceiptEmail } from "@/lib/email";
 import type { Database } from "@/lib/database.types";
 
 type SubscriptionInsert =
@@ -262,5 +263,69 @@ export async function adjustCreditsAction(
 
   revalidatePath(`/admin/alumnos/${studentId}`);
   revalidatePath("/app");
+  return {};
+}
+
+/**
+ * Manda por correo el recibo de un pago ya registrado, al email del
+ * titular de la cuenta.
+ */
+export async function sendPaymentReceiptAction(
+  paymentId: string,
+): Promise<{ error?: string }> {
+  await requireAdmin("/admin/alumnos");
+  const supabase = await createClient();
+
+  const { data: payment, error: paymentErr } = await supabase
+    .from("payments")
+    .select("id, account_id, student_id, kind, amount_cents, method, paid_at, subscription_id")
+    .eq("id", paymentId)
+    .maybeSingle();
+  if (paymentErr) return { error: paymentErr.message };
+  if (!payment) return { error: "Ese pago ya no existe." };
+
+  const [profileRes, studentRes, subRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", payment.account_id)
+      .maybeSingle(),
+    payment.student_id
+      ? supabase
+          .from("students")
+          .select("full_name")
+          .eq("id", payment.student_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    payment.subscription_id
+      ? supabase
+          .from("subscriptions")
+          .select("plans:plan_id (name)")
+          .eq("id", payment.subscription_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const profile = profileRes.data;
+  if (!profile?.email) return { error: "No encontramos el email del titular." };
+
+  const studentName = studentRes.data?.full_name ?? "—";
+  const planName =
+    (subRes.data as { plans: { name: string } | null } | null)?.plans?.name ??
+    null;
+
+  const res = await sendPaymentReceiptEmail({
+    to: { email: profile.email, name: profile.full_name },
+    studentName,
+    kind: payment.kind,
+    amountCents: payment.amount_cents,
+    method: payment.method,
+    paidAt: payment.paid_at,
+    planName,
+    folio: payment.id.slice(0, 8).toUpperCase(),
+  });
+
+  if (res.error) return { error: "No se pudo enviar el correo. Intenta de nuevo." };
+
   return {};
 }
