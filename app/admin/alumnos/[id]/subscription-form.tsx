@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Save, AlertCircle } from "lucide-react";
 import { renewSubscriptionAction, type SubFormState } from "./actions";
+import { formatMxn } from "@/lib/format";
 
 type PlanOption = {
   id: string;
@@ -96,6 +97,7 @@ export function SubscriptionForm({
               {p.credits_per_month !== null
                 ? ` · ${p.credits_per_month} créditos/mes`
                 : ""}
+              {` · ${formatMxn(p.price_cents)}`}
             </option>
           ))}
         </select>
