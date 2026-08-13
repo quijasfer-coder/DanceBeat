@@ -120,6 +120,36 @@ export async function renewSubscriptionAction(
 }
 
 /**
+ * Corrige el método de pago de una inscripción YA registrada (ej. el
+ * admin marcó "efectivo" por error y en realidad fue transferencia).
+ * Actualiza tanto el resumen en `students` como el pago histórico en
+ * `payments` para que el historial no quede inconsistente.
+ */
+export async function correctEnrollmentPaymentMethodAction(
+  studentId: string,
+  method: PaymentMethod,
+): Promise<{ error?: string }> {
+  await requireAdmin(`/admin/alumnos/${studentId}`);
+  const supabase = await createClient();
+
+  const { error: studentErr } = await supabase
+    .from("students")
+    .update({ enrollment_paid_method: method })
+    .eq("id", studentId);
+  if (studentErr) return { error: studentErr.message };
+
+  const { error: paymentErr } = await supabase
+    .from("payments")
+    .update({ method })
+    .eq("student_id", studentId)
+    .eq("kind", "enrollment");
+  if (paymentErr) return { error: paymentErr.message };
+
+  revalidatePath(`/admin/alumnos/${studentId}`);
+  return {};
+}
+
+/**
  * Asigna qué tipo de inscripción le toca a una alumna (define el monto
  * que se cobrará al marcar su inscripción como pagada).
  */

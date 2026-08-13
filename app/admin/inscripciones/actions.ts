@@ -24,6 +24,7 @@ export async function createEnrollmentTypeAction(
 
   const name = ((formData.get("name") as string) ?? "").trim();
   const priceMxnRaw = ((formData.get("price_mxn") as string) ?? "").trim();
+  const description = ((formData.get("description") as string) ?? "").trim();
 
   if (!name) return { error: "El nombre es obligatorio." };
   const priceMxn = parseFloat(priceMxnRaw);
@@ -46,6 +47,7 @@ export async function createEnrollmentTypeAction(
     code,
     name,
     price_cents: Math.round(priceMxn * 100),
+    description: description || null,
     display_order: displayOrder,
   });
 
@@ -70,6 +72,7 @@ export async function updateEnrollmentTypeAction(
 
   const name = ((formData.get("name") as string) ?? "").trim();
   const priceMxnRaw = ((formData.get("price_mxn") as string) ?? "").trim();
+  const description = ((formData.get("description") as string) ?? "").trim();
   const isActive = formData.get("is_active") === "on";
 
   if (!name) return { error: "El nombre es obligatorio." };
@@ -83,6 +86,7 @@ export async function updateEnrollmentTypeAction(
     .update({
       name,
       price_cents: Math.round(priceMxn * 100),
+      description: description || null,
       is_active: isActive,
       updated_at: new Date().toISOString(),
     })

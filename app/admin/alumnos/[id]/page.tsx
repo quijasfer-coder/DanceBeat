@@ -24,6 +24,7 @@ import { formatMxn } from "@/lib/format";
 import { SubscriptionForm } from "./subscription-form";
 import { CreditControls } from "./credit-controls";
 import { EnrollmentTypeSelect } from "./enrollment-type-select";
+import { EnrollmentMethodEdit } from "./enrollment-method-edit";
 import {
   AccountStatusActions,
   MarkEnrollmentPaidActions,
@@ -107,7 +108,7 @@ export default async function AdminAlumnoDetailPage({
         .order("created_at", { ascending: false }),
       supabase
         .from("enrollment_types")
-        .select("id, name, price_cents")
+        .select("id, name, price_cents, description")
         .eq("is_active", true)
         .order("display_order"),
       supabase
@@ -294,6 +295,11 @@ export default async function AdminAlumnoDetailPage({
               enrollmentTypes={enrollmentTypes}
               currentId={student.enrollment_type_id}
             />
+            {enrollmentType?.description && (
+              <p className="text-xs text-bone-mute mt-2 italic">
+                {enrollmentType.description}
+              </p>
+            )}
           </div>
 
           {!student.enrolled_at && (
@@ -326,14 +332,11 @@ export default async function AdminAlumnoDetailPage({
                 month: "long",
                 year: "numeric",
               })}
-              {student.enrollment_paid_method && (
-                <>
-                  {" "}
-                  · método:{" "}
-                  {PAYMENT_METHOD_LABEL[student.enrollment_paid_method] ??
-                    student.enrollment_paid_method}
-                </>
-              )}
+              {" · método: "}
+              <EnrollmentMethodEdit
+                studentId={student.id}
+                currentMethod={student.enrollment_paid_method}
+              />
               {enrollmentType && <> · {enrollmentType.name}</>}
             </p>
           )}

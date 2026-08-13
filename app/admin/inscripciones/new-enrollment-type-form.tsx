@@ -49,6 +49,18 @@ export function NewEnrollmentTypeForm() {
         />
       </div>
 
+      <div className="flex-1 min-w-[16rem]">
+        <label className="block text-[10px] font-mono uppercase tracking-widest text-bone-mute mb-1.5">
+          Nota (opcional, se ve en el perfil de la alumna)
+        </label>
+        <input
+          name="description"
+          type="text"
+          placeholder="Ej. Se cobra una vez al año, incluye uniforme"
+          className={inputClass}
+        />
+      </div>
+
       <button
         type="submit"
         disabled={pending}

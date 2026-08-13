@@ -37,6 +37,7 @@ export default async function AdminInscripcionesPage() {
             code={t.code}
             name={t.name}
             priceMxn={t.price_cents / 100}
+            description={t.description}
             isActive={t.is_active}
           />
         ))}
