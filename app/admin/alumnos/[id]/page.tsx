@@ -131,7 +131,9 @@ export default async function AdminAlumnoDetailPage({
     getSettings(["late_fee_pct", "late_fee_day_of_month"] as const),
     supabase
       .from("classes")
-      .select("id, style_id, studio_id, day_of_week, starts_at_time")
+      .select(
+        "id, style_id, studio_id, day_of_week, starts_at_time, level, capacity",
+      )
       .eq("is_active", true)
       .order("day_of_week"),
     supabase.from("styles").select("id, name"),
@@ -142,7 +144,6 @@ export default async function AdminAlumnoDetailPage({
       .eq("student_id", student.id),
   ]);
 
-  const dayLabelsShort = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
   const styleNameById = new Map(
     (stylesRes.data ?? []).map((s) => [s.id, s.name]),
   );
@@ -151,14 +152,22 @@ export default async function AdminAlumnoDetailPage({
   );
   const allClasses = (classesRes.data ?? []).map((c) => ({
     id: c.id,
-    label: `${styleNameById.get(c.style_id) ?? "—"} · ${
-      dayLabelsShort[c.day_of_week]
-    } ${c.starts_at_time.slice(0, 5)} · ${studioNameById.get(c.studio_id) ?? "—"}`,
+    styleName: styleNameById.get(c.style_id) ?? "—",
+    studioName: studioNameById.get(c.studio_id) ?? "—",
+    dayOfWeek: c.day_of_week,
+    time: c.starts_at_time.slice(0, 5),
+    level: c.level,
+    capacity: c.capacity,
   }));
   const fixedClassIds = new Set(
     (fixedEnrollmentsRes.data ?? []).map((e) => e.class_id),
   );
-  const fixedClasses = allClasses.filter((c) => fixedClassIds.has(c.id));
+  const fixedClasses = allClasses
+    .filter((c) => fixedClassIds.has(c.id))
+    .map((c) => ({
+      id: c.id,
+      label: `${c.styleName} · ${["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][c.dayOfWeek]} ${c.time} · ${c.studioName}`,
+    }));
   const availableClassesToAssign = allClasses.filter(
     (c) => !fixedClassIds.has(c.id),
   );
