@@ -110,6 +110,7 @@ export type Database = {
           created_at: string
           credit_returned: boolean
           id: string
+          is_fixed: boolean
           notes: string | null
           session_id: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -124,6 +125,7 @@ export type Database = {
           created_at?: string
           credit_returned?: boolean
           id?: string
+          is_fixed?: boolean
           notes?: string | null
           session_id: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -138,6 +140,7 @@ export type Database = {
           created_at?: string
           credit_returned?: boolean
           id?: string
+          is_fixed?: boolean
           notes?: string | null
           session_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -161,6 +164,52 @@ export type Database = {
           },
           {
             foreignKeyName: "bookings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_enrollments: {
+        Row: {
+          class_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_enrollments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_enrollments_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
@@ -1108,6 +1157,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assign_fixed_class: {
+        Args: { p_class_id: string; p_student_id: string }
+        Returns: number
+      }
       bulk_assign_event_by_class: {
         Args: { p_class_id: string; p_event_id: string }
         Returns: number
@@ -1122,6 +1175,7 @@ export type Database = {
           created_at: string
           credit_returned: boolean
           id: string
+          is_fixed: boolean
           notes: string | null
           session_id: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -1260,6 +1314,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      unassign_fixed_class: {
+        Args: { p_class_id: string; p_student_id: string }
+        Returns: number
       }
     }
     Enums: {

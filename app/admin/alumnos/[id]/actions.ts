@@ -150,6 +150,51 @@ export async function correctEnrollmentPaymentMethodAction(
 }
 
 /**
+ * Asigna una clase fija a una alumna — queda reservada automáticamente
+ * cada semana (consume crédito) y no se puede cancelar desde el portal.
+ * También la reserva de inmediato en las sesiones ya generadas.
+ */
+export async function assignFixedClassAction(
+  studentId: string,
+  classId: string,
+): Promise<{ error?: string }> {
+  await requireAdmin(`/admin/alumnos/${studentId}`);
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("assign_fixed_class", {
+    p_student_id: studentId,
+    p_class_id: classId,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/alumnos/${studentId}`);
+  revalidatePath("/app");
+  return {};
+}
+
+/**
+ * Quita una clase fija — cancela (con devolución de crédito) sus
+ * reservas futuras de esa clase.
+ */
+export async function unassignFixedClassAction(
+  studentId: string,
+  classId: string,
+): Promise<{ error?: string }> {
+  await requireAdmin(`/admin/alumnos/${studentId}`);
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("unassign_fixed_class", {
+    p_student_id: studentId,
+    p_class_id: classId,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/alumnos/${studentId}`);
+  revalidatePath("/app");
+  return {};
+}
+
+/**
  * Asigna qué tipo de inscripción le toca a una alumna (define el monto
  * que se cobrará al marcar su inscripción como pagada).
  */

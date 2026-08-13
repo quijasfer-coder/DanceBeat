@@ -25,6 +25,7 @@ import { SubscriptionForm } from "./subscription-form";
 import { CreditControls } from "./credit-controls";
 import { EnrollmentTypeSelect } from "./enrollment-type-select";
 import { EnrollmentMethodEdit } from "./enrollment-method-edit";
+import { FixedClassesSection } from "./fixed-classes-section";
 import {
   AccountStatusActions,
   MarkEnrollmentPaidActions,
@@ -89,36 +90,78 @@ export default async function AdminAlumnoDetailPage({
     curpSignedUrl = signed?.signedUrl ?? null;
   }
 
-  const [profileRes, plansRes, subsRes, enrollmentTypesRes, paymentsRes, settings] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", student.account_id)
-        .maybeSingle(),
-      supabase
-        .from("plans")
-        .select("id, name, code, credits_per_month, price_cents, is_active")
-        .eq("is_active", true)
-        .order("display_order"),
-      supabase
-        .from("subscriptions")
-        .select("*, plans:plan_id (name, code, price_cents)")
-        .eq("student_id", student.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("enrollment_types")
-        .select("id, name, price_cents, description")
-        .eq("is_active", true)
-        .order("display_order"),
-      supabase
-        .from("payments")
-        .select("*")
-        .eq("student_id", student.id)
-        .order("paid_at", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false }),
-      getSettings(["late_fee_pct", "late_fee_day_of_month"] as const),
-    ]);
+  const [
+    profileRes,
+    plansRes,
+    subsRes,
+    enrollmentTypesRes,
+    paymentsRes,
+    settings,
+    classesRes,
+    stylesRes,
+    studiosRes,
+    fixedEnrollmentsRes,
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", student.account_id)
+      .maybeSingle(),
+    supabase
+      .from("plans")
+      .select("id, name, code, credits_per_month, price_cents, is_active")
+      .eq("is_active", true)
+      .order("display_order"),
+    supabase
+      .from("subscriptions")
+      .select("*, plans:plan_id (name, code, price_cents)")
+      .eq("student_id", student.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("enrollment_types")
+      .select("id, name, price_cents, description")
+      .eq("is_active", true)
+      .order("display_order"),
+    supabase
+      .from("payments")
+      .select("*")
+      .eq("student_id", student.id)
+      .order("paid_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false }),
+    getSettings(["late_fee_pct", "late_fee_day_of_month"] as const),
+    supabase
+      .from("classes")
+      .select("id, style_id, studio_id, day_of_week, starts_at_time")
+      .eq("is_active", true)
+      .order("day_of_week"),
+    supabase.from("styles").select("id, name"),
+    supabase.from("studios").select("id, name"),
+    supabase
+      .from("class_enrollments")
+      .select("id, class_id")
+      .eq("student_id", student.id),
+  ]);
+
+  const dayLabelsShort = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const styleNameById = new Map(
+    (stylesRes.data ?? []).map((s) => [s.id, s.name]),
+  );
+  const studioNameById = new Map(
+    (studiosRes.data ?? []).map((s) => [s.id, s.name]),
+  );
+  const allClasses = (classesRes.data ?? []).map((c) => ({
+    id: c.id,
+    label: `${styleNameById.get(c.style_id) ?? "—"} · ${
+      dayLabelsShort[c.day_of_week]
+    } ${c.starts_at_time.slice(0, 5)} · ${studioNameById.get(c.studio_id) ?? "—"}`,
+  }));
+  const fixedClassIds = new Set(
+    (fixedEnrollmentsRes.data ?? []).map((e) => e.class_id),
+  );
+  const fixedClasses = allClasses.filter((c) => fixedClassIds.has(c.id));
+  const availableClassesToAssign = allClasses.filter(
+    (c) => !fixedClassIds.has(c.id),
+  );
 
   const profile = profileRes.data;
   const plans = (plansRes.data ?? []).map((p) => ({
@@ -552,6 +595,24 @@ export default async function AdminAlumnoDetailPage({
             </p>
           </div>
         )}
+      </section>
+
+      {/* Clases fijas */}
+      <section className="mb-8">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute mb-2">
+          Clases fijas
+        </p>
+        <p className="text-xs text-bone-mute mb-4">
+          Se reservan solas cada semana y consumen crédito — no se pueden
+          cancelar desde el portal.
+        </p>
+        <div className="glass rounded-2xl p-6">
+          <FixedClassesSection
+            studentId={student.id}
+            fixedClasses={fixedClasses}
+            availableClasses={availableClassesToAssign}
+          />
+        </div>
       </section>
 
       {/* Formulario de renovar + cobrar */}

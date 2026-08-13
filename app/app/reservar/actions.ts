@@ -21,6 +21,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   NO_CREDITS:
     "No te quedan créditos este ciclo. Espera al próximo ciclo o cambia de plan.",
   ALREADY_BOOKED: "Ya tienes reserva para esta clase.",
+  BOOKING_NOT_FOUND: "No encontramos esa reserva.",
+  NOT_CANCELLABLE: "Esa reserva ya no se puede cancelar.",
+  FIXED_BOOKING_NOT_CANCELLABLE:
+    "Esta clase es fija y no se puede cancelar desde aquí. Contacta a la academia.",
 };
 
 function mapPgError(raw: string): string {

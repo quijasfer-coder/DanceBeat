@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, Edit3, Plus } from "lucide-react";
+import { CheckCircle2, Edit3, Plus, List, CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { ToggleClassActive } from "@/components/admin/toggle-class-active";
@@ -10,16 +10,32 @@ export const metadata = {
 };
 
 const dayLabels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const dayLabelsFull = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+];
+// Semana empieza en lunes, domingo al final.
+const weekOrder = [1, 2, 3, 4, 5, 6, 0];
 const formatTime = (t: string) => t.slice(0, 5);
 
-type SearchParams = Promise<{ saved?: string; deleted?: string }>;
+type SearchParams = Promise<{
+  saved?: string;
+  deleted?: string;
+  vista?: string;
+}>;
 
 export default async function AdminClasesListPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { saved, deleted } = await searchParams;
+  const { saved, deleted, vista } = await searchParams;
+  const view = vista === "semana" ? "semana" : "tabla";
   const supabase = await createClient();
 
   // Queries separadas para evitar problemas de inferencia con embeds
@@ -37,9 +53,16 @@ export default async function AdminClasesListPage({
   const styleMap = new Map((stylesRes.data ?? []).map((s) => [s.id, s]));
   const studioMap = new Map((studiosRes.data ?? []).map((s) => [s.id, s]));
 
+  const classesByDay = new Map<number, typeof classes>();
+  for (const c of classes) {
+    const arr = classesByDay.get(c.day_of_week) ?? [];
+    arr.push(c);
+    classesByDay.set(c.day_of_week, arr);
+  }
+
   return (
     <div className="p-10 max-w-6xl">
-      <div className="flex items-start justify-between mb-12">
+      <div className="flex items-start justify-between mb-12 gap-4 flex-wrap">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute">
             Catálogo
@@ -50,13 +73,46 @@ export default async function AdminClasesListPage({
             Haz click en cualquier clase para editarla.
           </p>
         </div>
-        <Link
-          href="/admin/clases/nueva"
-          className="inline-flex items-center gap-2 bg-bone text-ink px-5 py-2.5 rounded-full text-sm font-medium hover:bg-lumen transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva clase
-        </Link>
+
+        <div className="flex items-center gap-3">
+          {/* Selector de vista, estilo Finder */}
+          <div className="inline-flex items-center rounded-full border border-bone-border/40 p-1">
+            <Link
+              href="/admin/clases"
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors",
+                view === "tabla"
+                  ? "bg-bone text-ink"
+                  : "text-bone-mute hover:text-bone",
+              )}
+              aria-label="Vista de tabla"
+            >
+              <List className="w-3.5 h-3.5" />
+              Tabla
+            </Link>
+            <Link
+              href="/admin/clases?vista=semana"
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors",
+                view === "semana"
+                  ? "bg-bone text-ink"
+                  : "text-bone-mute hover:text-bone",
+              )}
+              aria-label="Vista de semana"
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              Semana
+            </Link>
+          </div>
+
+          <Link
+            href="/admin/clases/nueva"
+            className="inline-flex items-center gap-2 bg-bone text-ink px-5 py-2.5 rounded-full text-sm font-medium hover:bg-lumen transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nueva clase
+          </Link>
+        </div>
       </div>
 
       {saved === "1" && (
@@ -80,6 +136,92 @@ export default async function AdminClasesListPage({
           <p className="text-bone-mute">
             Aún no hay clases. Crea la primera para empezar.
           </p>
+        </div>
+      ) : view === "semana" ? (
+        <div className="space-y-10">
+          {weekOrder.map((day) => {
+            const dayClasses = classesByDay.get(day) ?? [];
+            if (dayClasses.length === 0) return null;
+            return (
+              <section key={day}>
+                <div className="flex items-baseline justify-between mb-4 pb-3 border-b border-bone-border/30">
+                  <h2 className="font-display text-3xl tracking-wide">
+                    {dayLabelsFull[day]}
+                  </h2>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute">
+                    {dayClasses.length} clase{dayClasses.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {dayClasses.map((c) => {
+                    const styleName = styleMap.get(c.style_id)?.name ?? "—";
+                    const studioName = studioMap.get(c.studio_id)?.name ?? "—";
+                    return (
+                      <article
+                        key={c.id}
+                        className="rounded-2xl border border-bone-border/30 bg-ink-off p-5"
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="min-w-0">
+                            <p className="font-display text-lg text-bone tracking-wider truncate">
+                              {styleName}
+                            </p>
+                            <p className="font-mono text-[10px] uppercase tracking-wider text-bone-mute mt-1">
+                              {c.level}
+                            </p>
+                          </div>
+                          <span
+                            className={cn(
+                              "shrink-0 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded",
+                              c.is_active
+                                ? "bg-success/10 text-success"
+                                : "bg-bone-border/20 text-bone-mute",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full",
+                                c.is_active ? "bg-success" : "bg-bone-mute",
+                              )}
+                            />
+                            {c.is_active ? "Activa" : "Inactiva"}
+                          </span>
+                        </div>
+
+                        <dl className="space-y-1.5 text-xs text-bone-mute mb-4">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-3 h-3" />
+                            <span>
+                              {formatTime(c.starts_at_time)} · {c.duration_min} min
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-3 h-3" />
+                            <span>{studioName}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Users className="w-3 h-3" />
+                            <span>{c.capacity} lugares</span>
+                          </div>
+                        </dl>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-bone-border/30">
+                          <Link
+                            href={`/admin/clases/${c.id}/editar`}
+                            className="inline-flex items-center gap-1.5 text-xs text-bone hover:text-lumen transition-colors"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            Editar
+                          </Link>
+                          <ToggleClassActive classId={c.id} isActive={c.is_active} />
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-bone-border/30">
@@ -114,7 +256,7 @@ export default async function AdminClasesListPage({
                     className="border-t border-bone-border/30 hover:bg-ink-off/50 transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <p className="font-display text-lg text-bone">
+                      <p className="font-display text-lg text-bone tracking-wider">
                         {styleName}
                       </p>
                       <p className="font-mono text-[10px] uppercase tracking-wider text-bone-mute mt-1">

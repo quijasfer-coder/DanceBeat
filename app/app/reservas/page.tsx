@@ -152,7 +152,13 @@ export default async function MisReservasPage() {
                   </dl>
                 </div>
 
-                <CancelButton bookingId={b.id} isLate={isLate} />
+                {b.is_fixed ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider border border-lumen/30 text-lumen">
+                    Clase fija
+                  </span>
+                ) : (
+                  <CancelButton bookingId={b.id} isLate={isLate} />
+                )}
               </article>
             );
           })}
