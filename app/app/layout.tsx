@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { requireAuth, getAvailableModes } from "@/lib/auth";
 import { signOutAction } from "@/app/auth/actions";
 import { RoleSwitcher } from "@/components/role-switcher";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({
   children,
@@ -12,6 +13,14 @@ export default async function AppLayout({
 }) {
   const profile = await requireAuth("/app");
   const modes = await getAvailableModes(profile);
+
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("students")
+    .select("id", { count: "exact", head: true })
+    .eq("account_id", profile.id)
+    .not("enrolled_at", "is", null);
+  const hasEnrolledStudent = (count ?? 0) > 0;
 
   return (
     <div className="min-h-[100svh] flex flex-col">
@@ -30,7 +39,7 @@ export default async function AppLayout({
             </span>
           </Link>
 
-          {profile.account_status === "approved" && profile.enrolled_at && (
+          {profile.account_status === "approved" && hasEnrolledStudent && (
             <nav className="hidden md:flex items-center gap-6">
               <Link
                 href="/app"

@@ -31,7 +31,7 @@ export default async function ReservarPage() {
 
   const { data: students } = await supabase
     .from("students")
-    .select("id, full_name")
+    .select("id, full_name, enrolled_at")
     .eq("account_id", profile.id);
 
   const studentList = students ?? [];
@@ -61,6 +61,7 @@ export default async function ReservarPage() {
       return {
         id: s.id,
         full_name: s.full_name,
+        isEnrolled: !!s.enrolled_at,
         hasActivePlan: !!sub,
         creditsRemaining: sub?.credits_remaining ?? 0,
         alreadyBooked: bookedSet?.has(s.id) ?? false,

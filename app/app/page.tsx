@@ -132,6 +132,13 @@ export default async function AppDashboardPage() {
                 </Link>
               </div>
 
+              {!s.enrolled_at && (
+                <p className="mb-4 inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-warning/15 text-warning">
+                  <Clock className="w-3 h-3" />
+                  Inscripción pendiente
+                </p>
+              )}
+
               <dl className="space-y-2 text-sm text-bone-mute">
                 <div className="flex justify-between">
                   <dt>Edad</dt>

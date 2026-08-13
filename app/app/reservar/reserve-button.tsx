@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 type StudentOption = {
   id: string;
   full_name: string;
+  isEnrolled: boolean;
   hasActivePlan: boolean;
   creditsRemaining: number;
   alreadyBooked: boolean;
@@ -62,8 +63,17 @@ export function ReserveButton({
     );
   }
 
-  // Si solo hay un student, reservar directo. Si hay más, mostrar el menú.
-  const singleStudent = students.length === 1 ? students[0] : null;
+  // Si solo hay un student SIN restricciones, reservar directo.
+  // Si hay más de uno, o el único tiene algún bloqueo, mostrar el menú
+  // (ahí se ve por qué — inscripción pendiente, sin plan, etc.).
+  const singleStudent =
+    students.length === 1 &&
+    students[0].isEnrolled &&
+    students[0].hasActivePlan &&
+    students[0].creditsRemaining > 0 &&
+    !students[0].alreadyBooked
+      ? students[0]
+      : null;
 
   if (!open) {
     return (
@@ -104,7 +114,10 @@ export function ReserveButton({
       <div className="space-y-1">
         {students.map((s) => {
           const blocked =
-            !s.hasActivePlan || s.creditsRemaining <= 0 || s.alreadyBooked;
+            !s.isEnrolled ||
+            !s.hasActivePlan ||
+            s.creditsRemaining <= 0 ||
+            s.alreadyBooked;
           return (
             <button
               key={s.id}
@@ -122,11 +135,13 @@ export function ReserveButton({
               <p className="text-[10px] mt-0.5 font-mono uppercase tracking-wider opacity-70">
                 {s.alreadyBooked
                   ? "Ya reservada"
-                  : !s.hasActivePlan
-                    ? "Sin plan activo"
-                    : s.creditsRemaining <= 0
-                      ? "Sin créditos"
-                      : `${s.creditsRemaining} créditos`}
+                  : !s.isEnrolled
+                    ? "Inscripción pendiente"
+                    : !s.hasActivePlan
+                      ? "Sin plan activo"
+                      : s.creditsRemaining <= 0
+                        ? "Sin créditos"
+                        : `${s.creditsRemaining} créditos`}
               </p>
             </button>
           );

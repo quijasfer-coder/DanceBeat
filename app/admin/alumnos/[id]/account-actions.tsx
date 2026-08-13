@@ -95,14 +95,14 @@ export function AccountStatusActions({ accountId }: { accountId: string }) {
   );
 }
 
-export function MarkEnrollmentPaidActions({ accountId }: { accountId: string }) {
+export function MarkEnrollmentPaidActions({ studentId }: { studentId: string }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const mark = (method: "cash" | "transfer" | "other") => {
+  const mark = (method: "cash" | "transfer" | "tpv") => {
     setError(null);
     startTransition(async () => {
-      const res = await markEnrollmentPaidAction(accountId, method);
+      const res = await markEnrollmentPaidAction(studentId, method);
       if (!res.ok) setError(res.error);
     });
   };
@@ -132,11 +132,11 @@ export function MarkEnrollmentPaidActions({ accountId }: { accountId: string }) 
         </button>
         <button
           type="button"
-          onClick={() => mark("other")}
+          onClick={() => mark("tpv")}
           disabled={pending}
           className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-mono uppercase tracking-wider border border-bone-border/40 text-bone-mute hover:border-bone hover:text-bone disabled:opacity-50 transition-colors"
         >
-          Otro
+          TPV
         </button>
       </div>
       {error && <ErrorMsg msg={error} />}

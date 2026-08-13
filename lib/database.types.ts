@@ -472,9 +472,11 @@ export type Database = {
           failure_reason: string | null
           id: string
           kind: Database["public"]["Enums"]["payment_kind"]
+          method: string | null
           paid_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
           stripe_payment_intent_id: string | null
+          student_id: string | null
           subscription_id: string | null
         }
         Insert: {
@@ -485,9 +487,11 @@ export type Database = {
           failure_reason?: string | null
           id?: string
           kind: Database["public"]["Enums"]["payment_kind"]
+          method?: string | null
           paid_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           stripe_payment_intent_id?: string | null
+          student_id?: string | null
           subscription_id?: string | null
         }
         Update: {
@@ -498,9 +502,11 @@ export type Database = {
           failure_reason?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["payment_kind"]
+          method?: string | null
           paid_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           stripe_payment_intent_id?: string | null
+          student_id?: string | null
           subscription_id?: string | null
         }
         Relationships: [
@@ -512,6 +518,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payments_subscription_id_fkey"
             columns: ["subscription_id"]
             isOneToOne: false
@@ -519,6 +532,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      enrollment_types: {
+        Row: {
+          code: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price_cents: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       plans: {
         Row: {
@@ -679,6 +725,10 @@ export type Database = {
           curp_pdf_path: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
+          enrolled_at: string | null
+          enrollment_paid_by: string | null
+          enrollment_paid_method: string | null
+          enrollment_type_id: string | null
           father_name: string | null
           father_phone: string | null
           full_name: string
@@ -703,6 +753,10 @@ export type Database = {
           curp_pdf_path?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          enrolled_at?: string | null
+          enrollment_paid_by?: string | null
+          enrollment_paid_method?: string | null
+          enrollment_type_id?: string | null
           father_name?: string | null
           father_phone?: string | null
           full_name: string
@@ -727,6 +781,10 @@ export type Database = {
           curp_pdf_path?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          enrolled_at?: string | null
+          enrollment_paid_by?: string | null
+          enrollment_paid_method?: string | null
+          enrollment_type_id?: string | null
           father_name?: string | null
           father_phone?: string | null
           full_name?: string
@@ -750,6 +808,20 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_enrollment_paid_by_fkey"
+            columns: ["enrollment_paid_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_enrollment_type_id_fkey"
+            columns: ["enrollment_type_id"]
+            isOneToOne: false
+            referencedRelation: "enrollment_types"
             referencedColumns: ["id"]
           },
         ]
@@ -1099,28 +1171,38 @@ export type Database = {
         }
       }
       mark_enrollment_paid: {
-        Args: { p_account_id: string; p_method: string }
+        Args: { p_student_id: string; p_method: string }
         Returns: {
-          account_status: Database["public"]["Enums"]["account_status"]
-          approved_at: string | null
-          approved_by: string | null
+          account_id: string
+          birthdate: string
           created_at: string
-          email: string
+          curp_pdf_path: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           enrolled_at: string | null
           enrollment_paid_by: string | null
           enrollment_paid_method: string | null
+          enrollment_type_id: string | null
+          father_name: string | null
+          father_phone: string | null
           full_name: string
+          grade: string | null
           id: string
+          is_active: boolean
+          is_self: boolean
+          mother_name: string | null
+          mother_phone: string | null
+          notes: string | null
           phone: string | null
-          rejected_at: string | null
-          rejected_by: string | null
-          rejection_reason: string | null
-          role: Database["public"]["Enums"]["user_role"]
+          photo_url: string | null
+          photo_video_consent: boolean
+          photo_video_consent_at: string | null
+          school: string | null
           updated_at: string
         }
         SetofOptions: {
           from: "*"
-          to: "profiles"
+          to: "students"
           isOneToOne: true
           isSetofReturn: false
         }

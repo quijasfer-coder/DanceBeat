@@ -10,6 +10,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   NOT_AUTHENTICATED: "Tu sesión expiró. Vuelve a iniciar sesión.",
   NOT_OWNER: "Esa alumna no pertenece a tu cuenta.",
   STUDENT_NOT_FOUND: "No encontramos a la alumna.",
+  ENROLLMENT_REQUIRED:
+    "Esta alumna aún no tiene su inscripción pagada. Contacta a la academia.",
   SESSION_NOT_FOUND: "Esa clase ya no existe.",
   SESSION_NOT_BOOKABLE: "Esa clase fue cancelada y no se puede reservar.",
   SESSION_PAST: "La clase ya empezó. Refresca la página.",

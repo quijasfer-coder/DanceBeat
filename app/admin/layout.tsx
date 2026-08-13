@@ -8,6 +8,7 @@ import {
   UserCheck,
   Inbox,
   CreditCard,
+  Receipt,
   Settings,
   Image as ImageIcon,
   LogOut,
@@ -28,6 +29,7 @@ const navItems = [
   { href: "/admin/audiciones", label: "Audiciones", icon: UserCheck },
   { href: "/admin/alumnos", label: "Alumnos", icon: Users },
   { href: "/admin/planes", label: "Planes", icon: CreditCard },
+  { href: "/admin/inscripciones", label: "Inscripciones", icon: Receipt },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
 ];
 

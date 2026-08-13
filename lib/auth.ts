@@ -6,13 +6,20 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 /**
  * Devuelve a qué pantalla debe ir un profile según su `account_status`
- * y si pagó la inscripción. `null` significa que puede acceder a la
- * pantalla solicitada sin ningún redirect.
+ * y si al menos una de sus alumnas ya pagó su inscripción. `null`
+ * significa que puede acceder a la pantalla solicitada sin redirect.
+ *
+ * La inscripción es por ALUMNA, no por cuenta — pero para entrar al
+ * portal basta con que una esté inscrita; cuál puede reservar y cuál no
+ * se filtra dentro de /app/reservar y en el RPC book_class.
  */
-export function getAccountGateRedirect(profile: Profile): string | null {
+export function getAccountGateRedirect(
+  profile: Profile,
+  hasEnrolledStudent: boolean,
+): string | null {
   if (profile.account_status === "pending") return "/app/pendiente";
   if (profile.account_status === "rejected") return "/app/rechazado";
-  if (!profile.enrolled_at) return "/app/inscripcion";
+  if (!hasEnrolledStudent) return "/app/inscripcion";
   return null;
 }
 
@@ -56,7 +63,15 @@ export async function requireApprovedAccount(
   redirectTo: string,
 ): Promise<Profile> {
   const profile = await requireAuth(redirectTo);
-  const gate = getAccountGateRedirect(profile);
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("students")
+    .select("id", { count: "exact", head: true })
+    .eq("account_id", profile.id)
+    .not("enrolled_at", "is", null);
+  const hasEnrolledStudent = (count ?? 0) > 0;
+
+  const gate = getAccountGateRedirect(profile, hasEnrolledStudent);
   if (gate) redirect(gate);
   return profile;
 }

@@ -14,19 +14,36 @@ import {
   ShieldCheck,
   ShieldOff,
   Users,
+  Receipt,
 } from "lucide-react";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/avatar";
 import { requireAdmin } from "@/lib/auth";
-import { getSetting } from "@/lib/queries/settings";
+import { getSettings } from "@/lib/queries/settings";
 import { formatMxn } from "@/lib/format";
 import { SubscriptionForm } from "./subscription-form";
 import { CreditControls } from "./credit-controls";
+import { EnrollmentTypeSelect } from "./enrollment-type-select";
 import {
   AccountStatusActions,
   MarkEnrollmentPaidActions,
 } from "./account-actions";
 import { cn } from "@/lib/utils";
+
+const PAYMENT_KIND_LABEL: Record<string, string> = {
+  enrollment: "Inscripción",
+  monthly: "Mensualidad",
+  drop_in: "Clase suelta",
+  late_fee: "Recargo",
+  refund: "Reembolso",
+};
+
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  cash: "Efectivo",
+  transfer: "Transferencia",
+  tpv: "TPV",
+  stripe: "Stripe",
+};
 
 export const metadata = {
   title: "Admin · Alumno",
@@ -71,25 +88,36 @@ export default async function AdminAlumnoDetailPage({
     curpSignedUrl = signed?.signedUrl ?? null;
   }
 
-  const [profileRes, plansRes, subsRes, enrollmentFeeRaw] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", student.account_id)
-      .maybeSingle(),
-    supabase
-      .from("plans")
-      .select("id, name, code, credits_per_month, is_active")
-      .eq("is_active", true)
-      .order("display_order"),
-    supabase
-      .from("subscriptions")
-      .select("*, plans:plan_id (name, code)")
-      .eq("student_id", student.id)
-      .order("created_at", { ascending: false }),
-    getSetting("enrollment_fee_cents", "350000"),
-  ]);
-  const enrollmentFee = parseInt(enrollmentFeeRaw, 10);
+  const [profileRes, plansRes, subsRes, enrollmentTypesRes, paymentsRes, settings] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", student.account_id)
+        .maybeSingle(),
+      supabase
+        .from("plans")
+        .select("id, name, code, credits_per_month, price_cents, is_active")
+        .eq("is_active", true)
+        .order("display_order"),
+      supabase
+        .from("subscriptions")
+        .select("*, plans:plan_id (name, code, price_cents)")
+        .eq("student_id", student.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("enrollment_types")
+        .select("id, name, price_cents")
+        .eq("is_active", true)
+        .order("display_order"),
+      supabase
+        .from("payments")
+        .select("*")
+        .eq("student_id", student.id)
+        .order("paid_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false }),
+      getSettings(["late_fee_pct", "late_fee_day_of_month"] as const),
+    ]);
 
   const profile = profileRes.data;
   const plans = (plansRes.data ?? []).map((p) => ({
@@ -97,11 +125,35 @@ export default async function AdminAlumnoDetailPage({
     name: p.name,
     code: p.code,
     credits_per_month: p.credits_per_month,
+    price_cents: p.price_cents,
   }));
+  const enrollmentTypes = enrollmentTypesRes.data ?? [];
+  const enrollmentType =
+    enrollmentTypes.find((t) => t.id === student.enrollment_type_id) ?? null;
+  const payments = paymentsRes.data ?? [];
+
+  const lateFeePct = parseFloat(settings.late_fee_pct ?? "0.10");
+  const lateFeeDayOfMonth = parseInt(settings.late_fee_day_of_month ?? "10", 10);
 
   type SubRow = NonNullable<typeof subsRes.data>[number];
   const allSubs = (subsRes.data ?? []) as SubRow[];
   const activeSub = allSubs.find((s) => s.status === "active") ?? null;
+
+  // ¿Ya se registró el pago de este ciclo? (ligado a la sub activa)
+  const hasCurrentCyclePayment = activeSub
+    ? payments.some(
+        (p) =>
+          p.subscription_id === activeSub.id &&
+          p.kind === "monthly" &&
+          p.status === "succeeded",
+      )
+    : false;
+  const today = new Date();
+  const isPastCutoff = today.getDate() > lateFeeDayOfMonth;
+  const lateFeeApplies = isPastCutoff && !hasCurrentCyclePayment;
+  const suggestedAmountCents = activeSub
+    ? Math.round(activeSub.plans.price_cents * (lateFeeApplies ? 1 + lateFeePct : 1))
+    : null;
 
   // Defaults para el form: si hay sub activa, precarga sus valores
   const defaults = activeSub
@@ -154,7 +206,7 @@ export default async function AdminAlumnoDetailPage({
         </div>
       </div>
 
-      {/* Estado de la cuenta del titular */}
+      {/* Estado de la cuenta del titular (aprobación) */}
       {profile && (
         <section className="glass rounded-2xl p-6 mb-6">
           <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
@@ -164,17 +216,6 @@ export default async function AdminAlumnoDetailPage({
               </p>
               <div className="mt-2 flex items-center gap-3 flex-wrap">
                 <StatusBadge status={profile.account_status} />
-                {profile.enrolled_at ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-success/15 text-success">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Inscripción pagada
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-warning/15 text-warning">
-                    <Clock className="w-3 h-3" />
-                    Inscripción pendiente
-                  </span>
-                )}
               </div>
               {profile.account_status === "approved" && profile.approved_at && (
                 <p className="text-xs text-bone-mute mt-2">
@@ -210,45 +251,94 @@ export default async function AdminAlumnoDetailPage({
             </div>
           </div>
 
-          {/* Acciones según status */}
           {profile.account_status === "pending" && (
             <div className="border-t border-bone-border/30 pt-4 mt-4">
               <p className="text-xs text-bone-mute mb-3">
-                Esta cuenta espera aprobación. Tras aprobar, marca la
-                inscripción como pagada cuando recibas el pago.
+                Esta cuenta espera aprobación. Tras aprobar, ve abajo para
+                asignarle un tipo de inscripción a la alumna y marcarla pagada.
               </p>
               <AccountStatusActions accountId={profile.id} />
             </div>
           )}
+        </section>
+      )}
 
-          {profile.account_status === "approved" && !profile.enrolled_at && (
-            <div className="border-t border-bone-border/30 pt-4 mt-4">
-              <p className="text-xs text-bone-mute mb-3">
-                Cobro de inscripción pendiente:{" "}
-                <span className="text-bone font-mono">
-                  {formatMxn(enrollmentFee)}
+      {/* Inscripción — por alumna */}
+      <section className="glass rounded-2xl p-6 mb-6">
+        <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute">
+              Inscripción de {student.full_name}
+            </p>
+            <div className="mt-2 flex items-center gap-3 flex-wrap">
+              {student.enrolled_at ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-success/15 text-success">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Inscripción pagada
                 </span>
-                . El link de pago en línea estará disponible al integrar Stripe.
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-warning/15 text-warning">
+                  <Clock className="w-3 h-3" />
+                  Inscripción pendiente
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-bone-border/30 pt-4 mt-4 space-y-4">
+          <div>
+            <p className="text-xs text-bone-mute mb-2">Tipo de inscripción</p>
+            <EnrollmentTypeSelect
+              studentId={student.id}
+              enrollmentTypes={enrollmentTypes}
+              currentId={student.enrollment_type_id}
+            />
+          </div>
+
+          {!student.enrolled_at && (
+            <div>
+              <p className="text-xs text-bone-mute mb-3">
+                {enrollmentType ? (
+                  <>
+                    Cobro de inscripción pendiente:{" "}
+                    <span className="text-bone font-mono">
+                      {formatMxn(enrollmentType.price_cents)}
+                    </span>
+                    . El link de pago en línea estará disponible al integrar
+                    Stripe.
+                  </>
+                ) : (
+                  "Asigna un tipo de inscripción arriba antes de poder marcarla como pagada."
+                )}
               </p>
-              <MarkEnrollmentPaidActions accountId={profile.id} />
+              {enrollmentType && (
+                <MarkEnrollmentPaidActions studentId={student.id} />
+              )}
             </div>
           )}
 
-          {profile.enrolled_at && (
-            <div className="border-t border-bone-border/30 pt-4 mt-4 text-xs text-bone-mute">
+          {student.enrolled_at && (
+            <p className="text-xs text-bone-mute">
               Inscripción registrada el{" "}
-              {new Date(profile.enrolled_at).toLocaleDateString("es-MX", {
+              {new Date(student.enrolled_at).toLocaleDateString("es-MX", {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
               })}
-              {profile.enrollment_paid_method && (
-                <> · método: {profile.enrollment_paid_method}</>
+              {student.enrollment_paid_method && (
+                <>
+                  {" "}
+                  · método:{" "}
+                  {PAYMENT_METHOD_LABEL[student.enrollment_paid_method] ??
+                    student.enrollment_paid_method}
+                </>
               )}
-            </div>
+              {enrollmentType && <> · {enrollmentType.name}</>}
+            </p>
           )}
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Info del titular */}
       {profile && (
@@ -397,7 +487,7 @@ export default async function AdminAlumnoDetailPage({
         </div>
 
         {activeSub ? (
-          <div className="glass rounded-2xl p-6 mb-6">
+          <div className="glass rounded-2xl p-6 mb-4">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-success/15 text-success flex items-center justify-center">
                 <CreditCard className="w-4 h-4" />
@@ -420,32 +510,120 @@ export default async function AdminAlumnoDetailPage({
                     year: "numeric",
                   })}
                 </p>
+                <p className="text-xs mt-2">
+                  {hasCurrentCyclePayment ? (
+                    <span className="text-success">Pago de este ciclo registrado.</span>
+                  ) : (
+                    <span className="text-warning">Pago de este ciclo aún no registrado.</span>
+                  )}
+                </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="glass rounded-2xl p-6 mb-6 text-center">
+          <div className="glass rounded-2xl p-6 mb-4 text-center">
             <Calendar className="w-6 h-6 text-bone-mute mx-auto mb-3" />
             <p className="text-sm text-bone-mute">
-              Sin suscripción activa. Captura una abajo para que la alumna
-              pueda reservar.
+              Sin suscripción activa. Renueva abajo para que la alumna pueda
+              reservar.
+            </p>
+          </div>
+        )}
+
+        {lateFeeApplies && (
+          <div className="border border-warning/30 bg-warning/5 rounded-2xl p-5 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <p className="text-sm text-bone">
+              Ya pasó el día {lateFeeDayOfMonth} y no hay pago registrado de
+              este ciclo — aplica un recargo del {Math.round(lateFeePct * 100)}%.
+              {activeSub && (
+                <>
+                  {" "}
+                  Monto sugerido con recargo:{" "}
+                  <span className="font-mono text-warning">
+                    {formatMxn(suggestedAmountCents ?? 0)}
+                  </span>
+                  .
+                </>
+              )}
             </p>
           </div>
         )}
       </section>
 
-      {/* Formulario de upsert sub */}
+      {/* Formulario de renovar + cobrar */}
       <section className="mb-12">
         <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute mb-4">
-          {activeSub ? "Reemplazar suscripción" : "Crear suscripción"}
+          {activeSub ? "Renovar suscripción" : "Crear suscripción"}
         </p>
         <div className="glass rounded-2xl p-6">
           <SubscriptionForm
             studentId={student.id}
             plans={plans}
             defaults={defaults}
+            suggestedAmountCents={suggestedAmountCents}
+            lateFeeApplies={lateFeeApplies}
           />
         </div>
+      </section>
+
+      {/* Historial de pagos */}
+      <section className="mb-12">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute mb-4">
+          Historial de pagos · {payments.length}
+        </p>
+        {payments.length === 0 ? (
+          <div className="glass rounded-2xl p-8 text-center">
+            <Receipt className="w-6 h-6 text-bone-mute mx-auto mb-3" />
+            <p className="text-sm text-bone-mute">
+              Sin pagos registrados todavía.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {payments.map((p) => (
+              <div
+                key={p.id}
+                className="rounded-xl border border-bone-border/30 bg-ink-off p-4 flex items-center justify-between gap-4 text-sm"
+              >
+                <div>
+                  <p className="text-bone">
+                    {PAYMENT_KIND_LABEL[p.kind] ?? p.kind}
+                  </p>
+                  <p className="text-xs text-bone-mute mt-0.5 font-mono uppercase tracking-wider">
+                    {p.paid_at
+                      ? new Date(p.paid_at).toLocaleDateString("es-MX", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "Sin fecha de pago"}
+                    {p.method && (
+                      <> · {PAYMENT_METHOD_LABEL[p.method] ?? p.method}</>
+                    )}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-sm text-bone">
+                    {formatMxn(p.amount_cents)}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-[10px] font-mono uppercase tracking-wider mt-0.5",
+                      p.status === "succeeded"
+                        ? "text-success"
+                        : p.status === "failed"
+                          ? "text-danger"
+                          : "text-bone-mute",
+                    )}
+                  >
+                    {p.status}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Historial */}

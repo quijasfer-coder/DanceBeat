@@ -1,17 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Save, AlertCircle } from "lucide-react";
-import {
-  upsertStudentSubscriptionAction,
-  type SubFormState,
-} from "./actions";
+import { renewSubscriptionAction, type SubFormState } from "./actions";
 
 type PlanOption = {
   id: string;
   name: string;
   code: string;
   credits_per_month: number | null;
+  price_cents: number;
 };
 
 export type SubscriptionFormDefaults = {
@@ -31,16 +29,37 @@ export function SubscriptionForm({
   studentId,
   plans,
   defaults = {},
+  suggestedAmountCents,
+  lateFeeApplies,
 }: {
   studentId: string;
   plans: PlanOption[];
   defaults?: SubscriptionFormDefaults;
+  /** Monto sugerido para el plan por default (ya con recargo si aplica). */
+  suggestedAmountCents: number | null;
+  /** Si hoy ya pasó el día de corte y no hay pago de este ciclo. */
+  lateFeeApplies: boolean;
 }) {
-  const action = upsertStudentSubscriptionAction.bind(null, studentId);
+  const action = renewSubscriptionAction.bind(null, studentId);
   const [state, formAction, pending] = useActionState<SubFormState, FormData>(
     action,
     null,
   );
+
+  const plansById = new Map(plans.map((p) => [p.id, p]));
+  const [planId, setPlanId] = useState(defaults.plan_id ?? "");
+  const [amountMxn, setAmountMxn] = useState(() =>
+    suggestedAmountCents !== null ? (suggestedAmountCents / 100).toFixed(2) : "",
+  );
+
+  const applyPlanDefaults = (id: string) => {
+    setPlanId(id);
+    const plan = plansById.get(id);
+    if (!plan) return;
+    const base = plan.price_cents;
+    const withLateFee = lateFeeApplies ? Math.round(base * 1.1) : base;
+    setAmountMxn((withLateFee / 100).toFixed(2));
+  };
 
   return (
     <form action={formAction} className="space-y-5">
@@ -64,7 +83,8 @@ export function SubscriptionForm({
           id="plan_id"
           name="plan_id"
           required
-          defaultValue={defaults.plan_id ?? ""}
+          value={planId}
+          onChange={(e) => applyPlanDefaults(e.target.value)}
           className={inputClass}
         >
           <option value="" disabled>
@@ -141,13 +161,61 @@ export function SubscriptionForm({
         </div>
       </div>
 
+      <div className="hairline" />
+
+      <div>
+        <label htmlFor="payment_method" className={labelClass}>
+          Método de pago
+        </label>
+        <select
+          id="payment_method"
+          name="payment_method"
+          required
+          defaultValue=""
+          className={inputClass}
+        >
+          <option value="" disabled>
+            Selecciona…
+          </option>
+          <option value="cash">Efectivo</option>
+          <option value="transfer">Transferencia</option>
+          <option value="tpv">TPV (terminal)</option>
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="amount_mxn" className={labelClass}>
+          Monto cobrado (MXN)
+          {lateFeeApplies && (
+            <span className="text-warning normal-case tracking-normal">
+              {" "}
+              — incluye 10% de recargo por pago después del día de corte
+            </span>
+          )}
+        </label>
+        <input
+          id="amount_mxn"
+          name="amount_mxn"
+          type="number"
+          min="0"
+          step="0.01"
+          required
+          value={amountMxn}
+          onChange={(e) => setAmountMxn(e.target.value)}
+          className={inputClass}
+        />
+        <p className="text-xs text-bone-mute mt-2">
+          Precargado con el precio del plan{lateFeeApplies ? " + recargo" : ""}. Ajústalo si negociaste otro monto.
+        </p>
+      </div>
+
       <button
         type="submit"
         disabled={pending}
         className="inline-flex items-center gap-2 bg-bone text-ink px-5 py-2.5 rounded-full text-sm font-medium hover:bg-lumen disabled:opacity-50 transition-colors"
       >
         <Save className="w-4 h-4" />
-        {pending ? "Guardando…" : "Guardar suscripción"}
+        {pending ? "Guardando…" : "Renovar y registrar pago"}
       </button>
     </form>
   );

@@ -7,17 +7,18 @@ import type { Database } from "@/lib/database.types";
 
 type SubscriptionInsert =
   Database["public"]["Tables"]["subscriptions"]["Insert"];
+type PaymentMethod = "cash" | "transfer" | "tpv";
 
 export type SubFormState = { error?: string; success?: string } | null;
 
 /**
- * Crea o reemplaza la suscripción ACTIVA de un student.
- * Pre-Stripe: el admin captura plan, créditos asignados y ciclo a mano.
- *
- * Estrategia: si el student ya tiene una sub `active`, se cancela
- * (status='cancelled') y se inserta la nueva. Así no rompemos historial.
+ * Renueva la suscripción de un student Y registra el cobro en el mismo
+ * paso — antes eran dos cosas separadas (asignar plan a mano, sin
+ * ningún registro de pago). Estrategia igual que antes: si ya tiene una
+ * sub `active`, se cancela y se inserta la nueva; el pago queda ligado
+ * a la suscripción nueva.
  */
-export async function upsertStudentSubscriptionAction(
+export async function renewSubscriptionAction(
   studentId: string,
   _prev: SubFormState,
   formData: FormData,
@@ -31,11 +32,16 @@ export async function upsertStudentSubscriptionAction(
     ((formData.get("credits_remaining") as string) ?? "").trim();
   const cycleStartRaw = ((formData.get("cycle_start_at") as string) ?? "").trim();
   const cycleEndRaw = ((formData.get("cycle_end_at") as string) ?? "").trim();
+  const paymentMethod = ((formData.get("payment_method") as string) ?? "").trim() as
+    | PaymentMethod
+    | "";
+  const amountMxnRaw = ((formData.get("amount_mxn") as string) ?? "").trim();
 
   if (!planId) return { error: "Selecciona un plan." };
   if (!cycleStartRaw || !cycleEndRaw) {
     return { error: "Indica fechas de inicio y fin del ciclo." };
   }
+  if (!paymentMethod) return { error: "Selecciona el método de pago." };
 
   const creditsTotal = parseInt(creditsTotalRaw, 10);
   const creditsRemaining = creditsRemainingRaw
@@ -48,8 +54,22 @@ export async function upsertStudentSubscriptionAction(
     return { error: "Créditos restantes debe ser un número ≥ 0." };
   }
 
+  const amountMxn = parseFloat(amountMxnRaw);
+  if (isNaN(amountMxn) || amountMxn <= 0) {
+    return { error: "Indica el monto cobrado." };
+  }
+  const amountCents = Math.round(amountMxn * 100);
+
   const start = new Date(cycleStartRaw + "T00:00:00").toISOString();
   const end = new Date(cycleEndRaw + "T23:59:59").toISOString();
+
+  const { data: studentRow, error: studentErr } = await supabase
+    .from("students")
+    .select("account_id")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (studentErr) return { error: studentErr.message };
+  if (!studentRow) return { error: "Esa alumna ya no existe." };
 
   // Cancelar la activa previa (si existe) y crear nueva
   const { error: cancelErr } = await supabase
@@ -70,16 +90,55 @@ export async function upsertStudentSubscriptionAction(
     cycle_end_at: end,
   };
 
-  const { error: insertErr } = await supabase
+  const { data: newSub, error: insertErr } = await supabase
     .from("subscriptions")
-    .insert(insert);
+    .insert(insert)
+    .select("id")
+    .single();
 
-  if (insertErr) return { error: insertErr.message };
+  if (insertErr || !newSub) {
+    return { error: insertErr?.message ?? "No se pudo crear la suscripción." };
+  }
+
+  const { error: payErr } = await supabase.from("payments").insert({
+    account_id: studentRow.account_id,
+    student_id: studentId,
+    subscription_id: newSub.id,
+    kind: "monthly",
+    amount_cents: amountCents,
+    status: "succeeded",
+    method: paymentMethod,
+    paid_at: new Date().toISOString(),
+  });
+
+  if (payErr) return { error: `Pago: ${payErr.message}` };
 
   revalidatePath(`/admin/alumnos/${studentId}`);
   revalidatePath("/admin/alumnos");
   revalidatePath("/app");
-  return { success: "Suscripción activa actualizada." };
+  return { success: "Suscripción renovada y pago registrado — sus clases ya están habilitadas." };
+}
+
+/**
+ * Asigna qué tipo de inscripción le toca a una alumna (define el monto
+ * que se cobrará al marcar su inscripción como pagada).
+ */
+export async function setStudentEnrollmentTypeAction(
+  studentId: string,
+  enrollmentTypeId: string,
+): Promise<{ error?: string }> {
+  await requireAdmin(`/admin/alumnos/${studentId}`);
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("students")
+    .update({ enrollment_type_id: enrollmentTypeId || null })
+    .eq("id", studentId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/alumnos/${studentId}`);
+  return {};
 }
 
 export async function cancelStudentSubscriptionAction(

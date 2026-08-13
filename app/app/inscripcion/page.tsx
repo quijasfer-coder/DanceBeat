@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CreditCard, MessageCircle, CheckCircle2 } from "lucide-react";
 import { requireAuth } from "@/lib/auth";
-import { getSetting } from "@/lib/queries/settings";
+import { createClient } from "@/lib/supabase/server";
 import { formatMxn } from "@/lib/format";
 
 export const metadata = {
@@ -15,10 +15,36 @@ export default async function InscripcionPage() {
 
   if (profile.account_status === "pending") redirect("/app/pendiente");
   if (profile.account_status === "rejected") redirect("/app/rechazado");
-  if (profile.enrolled_at) redirect("/app");
 
-  const enrollmentFeeRaw = await getSetting("enrollment_fee_cents", "350000");
-  const enrollmentFee = parseInt(enrollmentFeeRaw, 10);
+  const supabase = await createClient();
+  const { data: students } = await supabase
+    .from("students")
+    .select("id, full_name, enrolled_at, enrollment_type_id")
+    .eq("account_id", profile.id);
+
+  const allStudents = students ?? [];
+  const hasEnrolledStudent = allStudents.some((s) => s.enrolled_at);
+
+  // Con al menos una alumna inscrita ya se puede entrar al portal — el
+  // resto se resuelve alumna por alumna dentro de /app.
+  if (hasEnrolledStudent) redirect("/app");
+
+  const pendingStudents = allStudents.filter((s) => !s.enrolled_at);
+  const enrollmentTypeIds = Array.from(
+    new Set(
+      pendingStudents
+        .map((s) => s.enrollment_type_id)
+        .filter((id): id is string => !!id),
+    ),
+  );
+  const { data: types } =
+    enrollmentTypeIds.length > 0
+      ? await supabase
+          .from("enrollment_types")
+          .select("id, price_cents")
+          .in("id", enrollmentTypeIds)
+      : { data: [] };
+  const priceById = new Map((types ?? []).map((t) => [t.id, t.price_cents]));
 
   return (
     <div className="container py-16 max-w-2xl">
@@ -28,32 +54,39 @@ export default async function InscripcionPage() {
         </div>
         <p className="eyebrow text-success mb-3">Cuenta aprobada</p>
         <h1 className="font-display text-4xl md:text-5xl leading-[0.95] text-balance">
-          Falta tu pago de
+          Falta el pago de
           <br />
           <span className="italic text-lumen">inscripción.</span>
         </h1>
         <p className="mt-6 text-bone-mute text-pretty">
-          Para activar tu acceso completo y empezar a contratar planes,
-          completa el pago único de inscripción.
+          Para activar el acceso completo y empezar a contratar planes,
+          completa el pago único de inscripción de cada alumna.
         </p>
       </div>
 
-      <div className="glass rounded-2xl p-8 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-12">
-          <div>
-            <p className="eyebrow text-lumen">Inscripción</p>
-            <p className="font-display text-5xl mt-3">{formatMxn(enrollmentFee)}</p>
-            <p className="text-xs text-bone-mute mt-2 font-mono uppercase tracking-wider">
-              Pago único
-            </p>
-          </div>
-          <div className="flex-1">
-            <p className="text-bone-mute text-pretty">
-              Cubre tu registro, kit de bienvenida y acceso a la plataforma.
-              No se cobra de nuevo mientras tu cuenta siga activa.
-            </p>
-          </div>
-        </div>
+      <div className="space-y-3 mb-6">
+        {pendingStudents.map((s) => {
+          const price = s.enrollment_type_id
+            ? priceById.get(s.enrollment_type_id)
+            : undefined;
+          return (
+            <div
+              key={s.id}
+              className="glass rounded-2xl p-6 flex items-center justify-between gap-4"
+            >
+              <p className="font-display text-xl">{s.full_name}</p>
+              <p className="font-mono text-sm">
+                {price !== undefined ? (
+                  formatMxn(price)
+                ) : (
+                  <span className="text-bone-mute text-xs">
+                    Monto por confirmar
+                  </span>
+                )}
+              </p>
+            </div>
+          );
+        })}
       </div>
 
       <div className="space-y-3">
@@ -75,8 +108,8 @@ export default async function InscripcionPage() {
           Pagar por WhatsApp / efectivo
         </a>
         <p className="text-center text-xs text-bone-mute mt-3">
-          Una vez recibido tu pago, el equipo activará tu cuenta y podrás
-          contratar tu plan de clases.
+          Una vez recibido el pago, el equipo lo registrará y esa alumna podrá
+          empezar a reservar.
         </p>
       </div>
 

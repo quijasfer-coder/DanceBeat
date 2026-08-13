@@ -10,6 +10,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   NOT_AUTHENTICATED: "Tu sesión expiró.",
   NOT_ADMIN: "No tienes permisos.",
   ACCOUNT_NOT_FOUND: "Esa cuenta ya no existe.",
+  STUDENT_NOT_FOUND: "Esa alumna ya no existe.",
+  NO_ENROLLMENT_TYPE: "Primero asigna un tipo de inscripción a la alumna.",
 };
 
 function mapPgError(raw: string): string {
@@ -56,14 +58,14 @@ export async function rejectAccountAction(
 }
 
 export async function markEnrollmentPaidAction(
-  accountId: string,
-  method: "cash" | "transfer" | "other",
+  studentId: string,
+  method: "cash" | "transfer" | "tpv",
 ): Promise<ApproveResult> {
   await requireAdmin("/admin/solicitudes");
   const supabase = await createClient();
 
   const { error } = await supabase.rpc("mark_enrollment_paid", {
-    p_account_id: accountId,
+    p_student_id: studentId,
     p_method: method,
   });
 
@@ -71,6 +73,6 @@ export async function markEnrollmentPaidAction(
 
   revalidatePath("/admin/solicitudes");
   revalidatePath("/admin/alumnos");
-  revalidatePath(`/admin/alumnos/${accountId}`);
+  revalidatePath(`/admin/alumnos/${studentId}`);
   return { ok: true };
 }
