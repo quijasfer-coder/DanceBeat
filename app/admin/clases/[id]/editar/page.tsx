@@ -117,6 +117,7 @@ export default async function EditClassPage({ params }: PageProps) {
           age_min: danceClass.age_min,
           age_max: danceClass.age_max,
           is_active: danceClass.is_active,
+          is_public: danceClass.is_public,
         }}
         studios={studiosRes.data ?? []}
         teachers={teachersRes.data ?? []}

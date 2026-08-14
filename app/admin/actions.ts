@@ -43,6 +43,7 @@ export async function updateClassAction(
   const ageMinStr = (formData.get("age_min") as string)?.trim();
   const ageMaxStr = (formData.get("age_max") as string)?.trim();
   const isActive = formData.get("is_active") === "on";
+  const isPublic = formData.get("is_public") === "on";
 
   // El DayPicker manda todos los días marcados en un solo campo. Esta fila
   // (classId) se queda con el día original si sigue marcado; si lo quitaron,
@@ -94,6 +95,7 @@ export async function updateClassAction(
       age_min: ageMinStr ? parseInt(ageMinStr, 10) : null,
       age_max: ageMaxStr ? parseInt(ageMaxStr, 10) : null,
       is_active: isActive,
+      is_public: isPublic,
     })
     .eq("id", classId);
 
@@ -367,6 +369,25 @@ export async function toggleClassActiveAction(
       p_weeks_ahead: 4,
     });
   }
+
+  revalidatePath("/", "layout");
+  revalidatePath("/clases");
+  revalidatePath("/horarios");
+  revalidatePath("/admin/clases");
+}
+
+/**
+ * Prende/apaga si una clase se anuncia en el sitio público (dancebeat.studio).
+ * No afecta si funciona en el sistema — eso es is_active, aparte.
+ */
+export async function toggleClassPublicAction(
+  classId: string,
+  newValue: boolean,
+): Promise<void> {
+  await requireAdmin("/admin/clases");
+  const supabase = await createClient();
+
+  await supabase.from("classes").update({ is_public: newValue }).eq("id", classId);
 
   revalidatePath("/", "layout");
   revalidatePath("/clases");

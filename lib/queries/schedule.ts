@@ -27,6 +27,7 @@ export async function getActiveClasses(): Promise<ClassWithStyleAndStudio[]> {
       `,
     )
     .eq("is_active", true)
+    .eq("is_public", true)
     .eq("studios.is_public", true)
     .order("day_of_week", { ascending: true })
     .order("starts_at_time", { ascending: true });
@@ -53,6 +54,7 @@ export async function getClassesByStyleSlug(
       `,
     )
     .eq("is_active", true)
+    .eq("is_public", true)
     .eq("styles.slug", styleSlug)
     .eq("studios.is_public", true)
     .order("day_of_week", { ascending: true })

@@ -277,6 +277,7 @@ export type Database = {
           duration_min: number
           id: string
           is_active: boolean
+          is_public: boolean
           level: Database["public"]["Enums"]["dance_level"]
           starts_at_time: string
           studio_id: string
@@ -293,6 +294,7 @@ export type Database = {
           duration_min?: number
           id?: string
           is_active?: boolean
+          is_public?: boolean
           level?: Database["public"]["Enums"]["dance_level"]
           starts_at_time: string
           studio_id: string
@@ -309,6 +311,7 @@ export type Database = {
           duration_min?: number
           id?: string
           is_active?: boolean
+          is_public?: boolean
           level?: Database["public"]["Enums"]["dance_level"]
           starts_at_time?: string
           studio_id?: string

@@ -34,6 +34,7 @@ type Props = {
     age_min: number | null;
     age_max: number | null;
     is_active: boolean;
+    is_public: boolean;
   };
   studios: { id: string; name: string }[];
   teachers: { id: string; full_name: string }[];
@@ -411,12 +412,29 @@ export function EditClassForm({
               <span className="text-sm">Clase activa</span>
             </label>
             <p className={helpClass + " ml-7"}>
-              Si la desactivas, la clase deja de aparecer en{" "}
-              <strong className="text-bone">/clases</strong>,{" "}
-              <strong className="text-bone">/horarios</strong> y el Home, y
+              Si la desactivas, la clase deja de funcionar en el sistema —
               ya no se pueden generar nuevas reservas. Las reservas
               existentes se mantienen. Útil para pausar una clase
               temporalmente sin borrarla.
+            </p>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_public"
+                defaultChecked={initial.is_public}
+                className="w-4 h-4 rounded border-bone-border/60 bg-ink-surface text-lumen focus:ring-lumen/30 cursor-pointer"
+              />
+              <span className="text-sm">Visible en el sitio público</span>
+            </label>
+            <p className={helpClass + " ml-7"}>
+              Si la quitas, la clase sigue funcionando normal en el
+              sistema (se puede reservar, genera sesiones) pero deja de
+              aparecer en <strong className="text-bone">/clases</strong> y{" "}
+              <strong className="text-bone">/horarios</strong> del sitio
+              público — nadie sin sesión iniciada la puede ver.
             </p>
           </div>
         </div>

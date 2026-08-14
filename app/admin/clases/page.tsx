@@ -3,6 +3,7 @@ import { CheckCircle2, Edit3, Plus, List, CalendarDays, Clock, MapPin, Users } f
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { ToggleClassActive } from "@/components/admin/toggle-class-active";
+import { ToggleClassPublic } from "@/components/admin/toggle-class-public";
 
 export const metadata = {
   title: "Admin · Clases",
@@ -214,6 +215,7 @@ export default async function AdminClasesListPage({
                             Editar
                           </Link>
                           <ToggleClassActive classId={c.id} isActive={c.is_active} />
+                          <ToggleClassPublic classId={c.id} isPublic={c.is_public} />
                         </div>
                       </article>
                     );
@@ -306,6 +308,7 @@ export default async function AdminClasesListPage({
                           Editar
                         </Link>
                         <ToggleClassActive classId={c.id} isActive={c.is_active} />
+                        <ToggleClassPublic classId={c.id} isPublic={c.is_public} />
                       </div>
                     </td>
                   </tr>
