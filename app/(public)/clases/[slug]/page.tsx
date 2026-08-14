@@ -2,14 +2,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Clock, Users, ChevronRight } from "lucide-react";
-import { getActiveStyles, getStyleBySlug } from "@/lib/queries/styles";
+import {
+  getStyleBySlug,
+  getStylesWithPublicSchedule,
+} from "@/lib/queries/styles";
 import { getClassesByStyleSlug } from "@/lib/queries/schedule";
 import { cn } from "@/lib/utils";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  const styles = await getActiveStyles();
+  const styles = await getStylesWithPublicSchedule();
   return styles.map((s) => ({ slug: s.slug }));
 }
 
@@ -76,12 +79,15 @@ export default async function ClassDetailPage({ params }: PageProps) {
   const [style, classes, otherStyles] = await Promise.all([
     getStyleBySlug(slug),
     getClassesByStyleSlug(slug),
-    getActiveStyles(),
+    getStylesWithPublicSchedule(),
   ]);
 
   if (!style) notFound();
 
   const hasSchedule = classes.length > 0;
+  // Sin ninguna clase pública, este estilo no debe verse en el sitio en
+  // absoluto — ni siquiera por URL directa (ej. indexado en Google).
+  if (!hasSchedule) notFound();
   const upcoming = getUpcomingDates(
     classes.map((c) => ({
       day_of_week: c.day_of_week,

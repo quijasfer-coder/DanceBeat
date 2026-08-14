@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getActiveStyles } from "@/lib/queries/styles";
+import { getStylesWithPublicSchedule } from "@/lib/queries/styles";
 import { getActiveClasses } from "@/lib/queries/schedule";
 
 export const metadata = {
@@ -22,8 +22,8 @@ const dayNames: Record<number, string> = {
 const formatTime = (t: string): string => t.slice(0, 5); // "19:30:00" → "19:30"
 
 export default async function ClasesPage() {
-  const [styles, classes] = await Promise.all([
-    getActiveStyles(),
+  const [visibleStyles, classes] = await Promise.all([
+    getStylesWithPublicSchedule(),
     getActiveClasses(),
   ]);
 
@@ -44,15 +44,15 @@ export default async function ClasesPage() {
           Todas <span className="italic text-bone-mute">las clases.</span>
         </h1>
         <p className="mt-6 text-lg text-bone-mute max-w-xl text-pretty">
-          {styles.length} disciplinas. Niveles desde principiante hasta
-          intermedio. Todas dictadas en CDMX.
+          {visibleStyles.length} disciplinas. Niveles desde principiante
+          hasta intermedio. Todas dictadas en CDMX.
         </p>
       </section>
 
       {/* Grid */}
       <section className="container">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
-          {styles.map((s) => {
+          {visibleStyles.map((s) => {
             const styleClasses = classesByStyle.get(s.id) ?? [];
             return (
               <Link

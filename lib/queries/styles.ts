@@ -1,4 +1,5 @@
 import { createPublicClient } from "@/lib/supabase/server";
+import { getActiveClasses } from "@/lib/queries/schedule";
 import type { Database } from "@/lib/database.types";
 
 export type Style = Database["public"]["Tables"]["styles"]["Row"];
@@ -18,6 +19,22 @@ export async function getActiveStyles(): Promise<Style[]> {
 
   if (error) throw error;
   return data ?? [];
+}
+
+/**
+ * Estilos activos que además tienen al menos una clase pública (activa,
+ * is_public=true, en una sucursal pública). Es lo que debe verse en
+ * cualquier listado/grid del sitio público — un estilo sin ninguna
+ * clase visible no debe ofrecerse como algo explorable/reservable,
+ * aunque `styles.is_active` siga en true.
+ */
+export async function getStylesWithPublicSchedule(): Promise<Style[]> {
+  const [styles, classes] = await Promise.all([
+    getActiveStyles(),
+    getActiveClasses(),
+  ]);
+  const styleIdsWithClasses = new Set(classes.map((c) => c.style_id));
+  return styles.filter((s) => styleIdsWithClasses.has(s.id));
 }
 
 /**

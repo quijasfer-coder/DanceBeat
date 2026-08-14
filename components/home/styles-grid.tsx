@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { getActiveStyles } from "@/lib/queries/styles";
+import { getStylesWithPublicSchedule } from "@/lib/queries/styles";
 
 const wordsForCount: Record<number, string> = {
   6: "Seis",
@@ -12,7 +12,7 @@ const wordsForCount: Record<number, string> = {
 };
 
 export async function StylesGrid() {
-  const styles = await getActiveStyles();
+  const styles = await getStylesWithPublicSchedule();
   const heading = wordsForCount[styles.length] ?? `${styles.length}`;
 
   return (
