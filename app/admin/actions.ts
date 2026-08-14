@@ -391,6 +391,7 @@ export async function toggleClassPublicAction(
 
   revalidatePath("/", "layout");
   revalidatePath("/clases");
+  revalidatePath("/clases/[slug]", "page");
   revalidatePath("/horarios");
   revalidatePath("/admin/clases");
 }

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 
 type ClassRow = Database["public"]["Tables"]["classes"]["Row"];
@@ -16,7 +16,7 @@ export type ClassWithStyleAndStudio = ClassRow & {
  * de una clase con su info completa.
  */
 export async function getActiveClasses(): Promise<ClassWithStyleAndStudio[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("classes")
     .select(
@@ -43,7 +43,7 @@ export async function getActiveClasses(): Promise<ClassWithStyleAndStudio[]> {
 export async function getClassesByStyleSlug(
   styleSlug: string,
 ): Promise<ClassWithStyleAndStudio[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("classes")
     .select(
