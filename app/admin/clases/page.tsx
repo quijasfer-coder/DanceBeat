@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { CheckCircle2, Edit3, Plus, List, CalendarDays, Clock, MapPin, Users } from "lucide-react";
+import {
+  CheckCircle2,
+  Edit3,
+  Plus,
+  List,
+  CalendarDays,
+  Clock,
+  MapPin,
+  Users,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { ToggleClassActive } from "@/components/admin/toggle-class-active";
@@ -28,6 +39,7 @@ type SearchParams = Promise<{
   saved?: string;
   deleted?: string;
   vista?: string;
+  visibilidad?: string;
 }>;
 
 export default async function AdminClasesListPage({
@@ -35,8 +47,12 @@ export default async function AdminClasesListPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { saved, deleted, vista } = await searchParams;
+  const { saved, deleted, vista, visibilidad } = await searchParams;
   const view = vista === "semana" ? "semana" : "tabla";
+  const visFilter =
+    visibilidad === "publicas" || visibilidad === "ocultas"
+      ? visibilidad
+      : "todas";
   const supabase = await createClient();
 
   // Queries separadas para evitar problemas de inferencia con embeds
@@ -50,9 +66,19 @@ export default async function AdminClasesListPage({
     supabase.from("studios").select("id, name"),
   ]);
 
-  const classes = classesRes.data ?? [];
+  const allClasses = classesRes.data ?? [];
   const styleMap = new Map((stylesRes.data ?? []).map((s) => [s.id, s]));
   const studioMap = new Map((studiosRes.data ?? []).map((s) => [s.id, s]));
+
+  const publicCount = allClasses.filter((c) => c.is_public).length;
+  const hiddenCount = allClasses.length - publicCount;
+
+  const classes =
+    visFilter === "publicas"
+      ? allClasses.filter((c) => c.is_public)
+      : visFilter === "ocultas"
+        ? allClasses.filter((c) => !c.is_public)
+        : allClasses;
 
   const classesByDay = new Map<number, typeof classes>();
   for (const c of classes) {
@@ -61,17 +87,32 @@ export default async function AdminClasesListPage({
     classesByDay.set(c.day_of_week, arr);
   }
 
+  const visHref = (v: string) => {
+    const params = new URLSearchParams();
+    if (view === "semana") params.set("vista", "semana");
+    if (v !== "todas") params.set("visibilidad", v);
+    const qs = params.toString();
+    return `/admin/clases${qs ? `?${qs}` : ""}`;
+  };
+  const viewHref = (v: "tabla" | "semana") => {
+    const params = new URLSearchParams();
+    if (v === "semana") params.set("vista", "semana");
+    if (visFilter !== "todas") params.set("visibilidad", visFilter);
+    const qs = params.toString();
+    return `/admin/clases${qs ? `?${qs}` : ""}`;
+  };
+
   return (
     <div className="p-10 max-w-6xl">
-      <div className="flex items-start justify-between mb-12 gap-4 flex-wrap">
+      <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute">
             Catálogo
           </p>
           <h1 className="font-display text-5xl mt-2">Clases</h1>
           <p className="text-sm text-bone-mute mt-3">
-            {classes.length} clase{classes.length === 1 ? "" : "s"} en total.
-            Haz click en cualquier clase para editarla.
+            {allClasses.length} clase{allClasses.length === 1 ? "" : "s"} en
+            total. Haz click en cualquier clase para editarla.
           </p>
         </div>
 
@@ -79,7 +120,7 @@ export default async function AdminClasesListPage({
           {/* Selector de vista, estilo Finder */}
           <div className="inline-flex items-center rounded-full border border-bone-border/40 p-1">
             <Link
-              href="/admin/clases"
+              href={viewHref("tabla")}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors",
                 view === "tabla"
@@ -92,7 +133,7 @@ export default async function AdminClasesListPage({
               Tabla
             </Link>
             <Link
-              href="/admin/clases?vista=semana"
+              href={viewHref("semana")}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors",
                 view === "semana"
@@ -116,6 +157,45 @@ export default async function AdminClasesListPage({
         </div>
       </div>
 
+      {/* Filtro por visibilidad pública */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-8">
+        <Link
+          href={visHref("todas")}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors",
+            visFilter === "todas"
+              ? "bg-bone text-ink"
+              : "border border-bone-border/40 text-bone-mute hover:text-bone",
+          )}
+        >
+          Todas · {allClasses.length}
+        </Link>
+        <Link
+          href={visHref("publicas")}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors",
+            visFilter === "publicas"
+              ? "bg-bone text-ink"
+              : "border border-bone-border/40 text-bone-mute hover:text-bone",
+          )}
+        >
+          <Eye className="w-3 h-3" />
+          Públicas · {publicCount}
+        </Link>
+        <Link
+          href={visHref("ocultas")}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors",
+            visFilter === "ocultas"
+              ? "bg-bone text-ink"
+              : "border border-bone-border/40 text-bone-mute hover:text-bone",
+          )}
+        >
+          <EyeOff className="w-3 h-3" />
+          Ocultas · {hiddenCount}
+        </Link>
+      </div>
+
       {saved === "1" && (
         <div className="mb-6 flex items-center gap-3 bg-success/10 border border-success/30 rounded-lg p-4">
           <CheckCircle2 className="w-5 h-5 text-success" />
@@ -135,7 +215,11 @@ export default async function AdminClasesListPage({
       {classes.length === 0 ? (
         <div className="glass rounded-2xl p-12 text-center">
           <p className="text-bone-mute">
-            Aún no hay clases. Crea la primera para empezar.
+            {allClasses.length === 0
+              ? "Aún no hay clases. Crea la primera para empezar."
+              : visFilter === "ocultas"
+                ? "No hay clases ocultas — todas se muestran en el sitio público."
+                : "No hay clases públicas todavía."}
           </p>
         </div>
       ) : view === "semana" ? (
@@ -214,8 +298,10 @@ export default async function AdminClasesListPage({
                             <Edit3 className="w-3.5 h-3.5" />
                             Editar
                           </Link>
-                          <ToggleClassActive classId={c.id} isActive={c.is_active} />
-                          <ToggleClassPublic classId={c.id} isPublic={c.is_public} />
+                          <div className="flex items-center gap-4">
+                            <ToggleClassActive classId={c.id} isActive={c.is_active} />
+                            <ToggleClassPublic classId={c.id} isPublic={c.is_public} />
+                          </div>
                         </div>
                       </article>
                     );
@@ -230,22 +316,22 @@ export default async function AdminClasesListPage({
           <table className="w-full">
             <thead className="bg-ink-off">
               <tr className="text-left">
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
+                <th className="px-6 py-5 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
                   Clase
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
+                <th className="px-6 py-5 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
                   Horario
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
+                <th className="px-6 py-5 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
                   Sucursal
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
+                <th className="px-6 py-5 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
                   Cupo
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
+                <th className="px-6 py-5 font-mono text-[10px] uppercase tracking-widest text-bone-mute">
                   Estado
                 </th>
-                <th className="px-6 py-4"></th>
+                <th className="px-6 py-5"></th>
               </tr>
             </thead>
             <tbody>
@@ -257,7 +343,7 @@ export default async function AdminClasesListPage({
                     key={c.id}
                     className="border-t border-bone-border/30 hover:bg-ink-off/50 transition-colors"
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-5">
                       <p className="font-display text-lg text-bone tracking-wider">
                         {styleName}
                       </p>
@@ -265,7 +351,7 @@ export default async function AdminClasesListPage({
                         {c.level}
                       </p>
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-5 text-sm">
                       <span className="font-mono uppercase tracking-wider">
                         {dayLabels[c.day_of_week]} ·{" "}
                         {formatTime(c.starts_at_time)}
@@ -274,13 +360,13 @@ export default async function AdminClasesListPage({
                         {c.duration_min} min
                       </p>
                     </td>
-                    <td className="px-6 py-4 text-sm text-bone-mute">
+                    <td className="px-6 py-5 text-sm text-bone-mute">
                       {studioName}
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-5 text-sm">
                       <span className="font-mono">{c.capacity}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-5">
                       <span
                         className={cn(
                           "inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded",
@@ -298,8 +384,8 @@ export default async function AdminClasesListPage({
                         {c.is_active ? "Activa" : "Inactiva"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="inline-flex items-center justify-end">
+                    <td className="px-6 py-5 text-right">
+                      <div className="inline-flex items-center justify-end gap-4">
                         <Link
                           href={`/admin/clases/${c.id}/editar`}
                           className="inline-flex items-center gap-1.5 text-xs text-bone hover:text-lumen transition-colors"

@@ -22,7 +22,7 @@ export function ToggleClassActive({
     <button
       onClick={handleToggle}
       disabled={isPending}
-      className="inline-flex items-center gap-1.5 text-xs text-bone-mute hover:text-bone transition-colors disabled:opacity-40 ml-4"
+      className="inline-flex items-center gap-1.5 text-xs text-bone-mute hover:text-bone transition-colors disabled:opacity-40"
       title={isActive ? "Desactivar clase" : "Activar clase"}
     >
       {isPending ? (
