@@ -14,7 +14,11 @@ const links = [
   { href: "/academy", label: "Academy" },
 ];
 
-export function Nav() {
+export function Nav({
+  profile,
+}: {
+  profile: { full_name: string } | null;
+}) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -59,12 +63,21 @@ export function Nav() {
           ))}
         </nav>
 
-        <Link
-          href="/auth/login"
-          className="text-sm border border-bone-border/60 hover:border-bone hover:bg-bone hover:text-ink transition-all px-4 py-2 rounded-full"
-        >
-          Iniciar sesión
-        </Link>
+        {profile ? (
+          <Link
+            href="/app"
+            className="text-sm border border-bone-border/60 hover:border-bone hover:bg-bone hover:text-ink transition-all px-4 py-2 rounded-full"
+          >
+            {profile.full_name.split(" ")[0]}
+          </Link>
+        ) : (
+          <Link
+            href="/auth/login"
+            className="text-sm border border-bone-border/60 hover:border-bone hover:bg-bone hover:text-ink transition-all px-4 py-2 rounded-full"
+          >
+            Iniciar sesión
+          </Link>
+        )}
       </div>
     </header>
   );

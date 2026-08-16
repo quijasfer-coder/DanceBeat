@@ -11,6 +11,12 @@ export const metadata = {
     "Mensualidades desde $2,200 hasta $3,750. Elige tu plan según el ritmo con el que quieres bailar.",
 };
 
+// Esta página decide qué mostrar (precios sí/no) según la sesión del
+// usuario (cookies). Forzamos render dinámico por request para que
+// Next/Vercel nunca puedan cachear el HTML de un usuario logueado y
+// servírselo a un visitante anónimo (o viceversa).
+export const dynamic = "force-dynamic";
+
 const faqs = [
   {
     q: "¿La inscripción es por una vez o cada año?",
