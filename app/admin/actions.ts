@@ -626,6 +626,59 @@ export async function linkTeacherProfileAction(
 }
 
 /**
+ * Vuelve a mandar el correo de invitación a un coreógrafo que ya tiene
+ * cuenta vinculada pero nunca terminó de poner su contraseña (o cuyo link
+ * anterior ya expiró / se usó / se rompió). El link de invite original es
+ * de un solo uso — clickearlo dos veces no lo revive, hay que generar uno
+ * nuevo. Se usa type "recovery" (no "invite") porque el usuario ya existe
+ * en auth.users; recovery igual lo manda a poner una contraseña nueva.
+ */
+export async function resendTeacherInviteAction(
+  teacherId: string,
+): Promise<{ error?: string }> {
+  await requireAdmin("/admin/coreografos");
+  const supabase = await createClient();
+
+  const { data: teacher } = await supabase
+    .from("teachers")
+    .select("full_name, profile_id")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  if (!teacher?.profile_id) {
+    return { error: "Este coreógrafo no tiene cuenta vinculada todavía." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email, full_name")
+    .eq("id", teacher.profile_id)
+    .maybeSingle();
+
+  if (!profile) return { error: "No se encontró el perfil vinculado." };
+
+  const adminClient = createAdminClient();
+  const { data: link, error: linkErr } = await adminClient.auth.admin.generateLink({
+    type: "recovery",
+    email: profile.email,
+    options: { redirectTo: `${SITE_URL}/auth/callback?type=recovery` },
+  });
+
+  if (linkErr || !link?.properties?.action_link) {
+    return { error: `No se pudo generar el link: ${linkErr?.message ?? "error desconocido"}` };
+  }
+
+  await sendTeacherWelcomeEmail({
+    email: profile.email,
+    name: profile.full_name || teacher.full_name,
+    actionUrl: link.properties.action_link,
+    isNewAccount: true,
+  });
+
+  return {};
+}
+
+/**
  * Toggle is_active de un coreógrafo (no destruye sus clases asignadas;
  * solo lo oculta de selectores futuros).
  */

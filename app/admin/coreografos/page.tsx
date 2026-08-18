@@ -5,6 +5,7 @@ import { CreateTeacherForm } from "./create-form";
 import { LinkProfileForm } from "./link-form";
 import { ToggleActive } from "./toggle-active";
 import { DeleteTeacherButton } from "./delete-teacher-button";
+import { ResendInviteButton } from "./resend-invite-button";
 
 export const metadata = {
   title: "Admin · Coreógrafos",
@@ -113,10 +114,13 @@ export default async function AdminCoreografosPage({
                     </p>
 
                     {profile ? (
-                      <p className="text-xs text-bone-mute mt-1.5 font-mono">
-                        Vinculado a {profile.email} · rol{" "}
-                        <span className="text-lumen">{profile.role}</span>
-                      </p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                        <p className="text-xs text-bone-mute font-mono">
+                          Vinculado a {profile.email} · rol{" "}
+                          <span className="text-lumen">{profile.role}</span>
+                        </p>
+                        <ResendInviteButton teacherId={t.id} />
+                      </div>
                     ) : (
                       <div className="mt-2 flex items-start gap-2 text-xs text-warning">
                         <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
