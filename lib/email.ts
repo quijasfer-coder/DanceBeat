@@ -140,31 +140,47 @@ const ctaButton = (href: string, label: string) => `
 `;
 
 /**
- * Correo que le llega a alguien cuando queda vinculado como profesor/a
- * (rol `teacher`) — ya sea al darlo de alta con un email que ya tenía
- * cuenta, o al vincular su cuenta después.
+ * Correo que le llega a alguien cuando queda dado de alta como profesor/a
+ * (rol `teacher`). Dos variantes según `isNewAccount`:
+ *  - true:  aún no tenía cuenta — el link es un invite link de Supabase
+ *           (`actionUrl`) que lo lleva a crear su contraseña y luego a
+ *           /profesor/perfil a capturar su contacto de emergencia.
+ *  - false: ya tenía cuenta (se vinculó por email o manualmente) — el
+ *           link manda directo a /profesor/perfil, ya con sesión.
  */
 export async function sendTeacherWelcomeEmail(to: {
   email: string;
   name: string;
+  actionUrl: string;
+  isNewAccount: boolean;
 }) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://dancebeat.studio";
-  const loginUrl = `${siteUrl}/profesor`;
-  const subject = "Ya eres profesor/a en Dance Beat Academy";
+  const subject = "Ahora eres profesor/a en Dance Beat";
   const firstName = to.name.trim().split(/\s+/)[0] || to.name;
+
+  const introHtml = to.isNewAccount
+    ? `Te acabamos de dar de alta como profesora en Dance Beat Academy. Para
+       terminar tu registro, crea tu contraseña y captura tu contacto de
+       emergencia — te toma un minuto.`
+    : `Te acabamos de dar de alta como profesora en Dance Beat Academy. Entra
+       a tu panel y aprovecha para capturar tu contacto de emergencia si aún
+       no lo has hecho.`;
+  const ctaLabel = to.isNewAccount
+    ? "Crear mi contraseña →"
+    : "Entrar a mi panel →";
+  const introText = to.isNewAccount
+    ? "Para terminar tu registro, crea tu contraseña y captura tu contacto de emergencia:"
+    : "Entra a tu panel y captura tu contacto de emergencia si aún no lo has hecho:";
 
   const html = brandHtmlWrapper({
     eyebrow: "Bienvenida al equipo",
     bodyHtml: `
       <h1 style="margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.15;color:#ffffff;font-weight:400;">
-        ¡Hola, ${firstName}!<br/>Ya eres profesora en Dance&nbsp;Beat.
+        ¡Hola, ${firstName}!<br/>Ahora eres profesora en Dance&nbsp;Beat.
       </h1>
       <p style="margin:0 0 26px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:15px;line-height:1.65;color:#c9c9c9;">
-        Te acabamos de dar de alta como profesora en Dance Beat Academy. Desde tu
-        panel puedes ver tus clases asignadas, generar las sesiones de la semana
-        y tomar lista de tus alumnas.
+        ${introHtml}
       </p>
-      ${ctaButton(loginUrl, "Entrar a mi panel →")}
+      ${ctaButton(to.actionUrl, ctaLabel)}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:30px;">
         <tr><td style="border-top:1px solid #2a2727;font-size:1px;line-height:1px;">&nbsp;</td></tr>
       </table>
@@ -176,7 +192,7 @@ export async function sendTeacherWelcomeEmail(to: {
 
   const text = `¡Hola, ${firstName}!
 
-Ya eres profesora en Dance Beat Academy. Entra a tu panel: ${loginUrl}
+Ahora eres profesora en Dance Beat Academy. ${introText} ${to.actionUrl}
 
 Si no reconoces esta cuenta o crees que es un error, contáctanos.`;
 

@@ -452,9 +452,14 @@ export async function updateSettingsAction(
 }
 
 /**
- * Crea un coreógrafo (teacher) y, si existe ya un profile con ese email,
- * lo vincula y promueve a role='teacher'. Si no existe, crea solo el
- * registro de catálogo y avisa que el usuario aún debe registrarse.
+ * Crea un coreógrafo (teacher). Si ya existe un profile con ese email, lo
+ * vincula y promueve a role='teacher'. Si no existe, genera una cuenta vía
+ * invite de Supabase (auth.admin.generateLink) y manda el correo propio de
+ * Dance Beat con el link para que cree su contraseña — no dependemos del
+ * template de invitación de Supabase.
+ *
+ * En ambos casos se manda sendTeacherWelcomeEmail: el link lleva a
+ * /profesor/perfil para que además capture su contacto de emergencia.
  */
 export async function createTeacherAction(
   _prev: AdminFormState,
@@ -472,34 +477,72 @@ export async function createTeacherAction(
   if (!fullName) {
     return { error: "El nombre es obligatorio." };
   }
+  if (!email) {
+    return { error: "El email es obligatorio — se usa para invitarla a crear su cuenta." };
+  }
 
-  let profileId: string | null = null;
-  let warning: string | null = null;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://dancebeat.studio";
+  const perfilUrl = `${siteUrl}/profesor/perfil`;
 
-  if (email) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, role, email, full_name")
-      .eq("email", email)
-      .maybeSingle();
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("id, role, email, full_name")
+    .eq("email", email)
+    .maybeSingle();
 
-    if (profile) {
-      profileId = profile.id;
-      if (profile.role !== "admin") {
-        const { error: roleErr } = await supabase
-          .from("profiles")
-          .update({ role: "teacher" })
-          .eq("id", profile.id);
-        if (roleErr) return { error: `Profile: ${roleErr.message}` };
-      }
-      // No bloquea el alta si el correo falla — solo se loguea.
-      await sendTeacherWelcomeEmail({
-        email: profile.email,
-        name: profile.full_name || fullName,
-      });
-    } else {
-      warning = `No existe un usuario registrado con ${email}. Pídele que cree su cuenta en /auth/registro con ese mismo email para vincularlo.`;
+  let profileId: string;
+
+  if (existingProfile) {
+    // Ya tenía cuenta: promover a teacher y mandarla directo a su perfil.
+    profileId = existingProfile.id;
+    if (existingProfile.role !== "admin") {
+      const { error: roleErr } = await supabase
+        .from("profiles")
+        .update({ role: "teacher" })
+        .eq("id", existingProfile.id);
+      if (roleErr) return { error: `Profile: ${roleErr.message}` };
     }
+
+    await sendTeacherWelcomeEmail({
+      email: existingProfile.email,
+      name: existingProfile.full_name || fullName,
+      actionUrl: perfilUrl,
+      isNewAccount: false,
+    });
+  } else {
+    // No tenía cuenta: crearla vía invite de Supabase (admin API, requiere
+    // service role) y mandar el link nosotros mismos por Brevo.
+    const adminClient = createAdminClient();
+    const { data: invite, error: inviteErr } =
+      await adminClient.auth.admin.generateLink({
+        type: "invite",
+        email,
+        options: {
+          data: { full_name: fullName },
+          redirectTo: `${siteUrl}/auth/callback?type=invite`,
+        },
+      });
+
+    if (inviteErr || !invite?.user) {
+      return { error: `No se pudo invitar: ${inviteErr?.message ?? "error desconocido"}` };
+    }
+
+    profileId = invite.user.id;
+
+    // El trigger handle_new_user ya insertó el profile con role='student' y
+    // account_status='pending' — lo corregimos a teacher/approved.
+    const { error: roleErr } = await adminClient
+      .from("profiles")
+      .update({ role: "teacher", account_status: "approved" })
+      .eq("id", profileId);
+    if (roleErr) return { error: `Profile: ${roleErr.message}` };
+
+    await sendTeacherWelcomeEmail({
+      email,
+      name: fullName,
+      actionUrl: invite.properties.action_link,
+      isNewAccount: true,
+    });
   }
 
   const { error: teacherErr } = await supabase.from("teachers").insert({
@@ -514,11 +557,6 @@ export async function createTeacherAction(
   if (teacherErr) return { error: `Teacher: ${teacherErr.message}` };
 
   revalidatePath("/admin/coreografos");
-
-  if (warning) {
-    return { success: warning };
-  }
-
   redirect("/admin/coreografos?saved=1");
 }
 
@@ -575,10 +613,14 @@ export async function linkTeacherProfileAction(
     if (rErr) return { error: `Profile: ${rErr.message}` };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://dancebeat.studio";
+
   // No bloquea la vinculación si el correo falla — solo se loguea.
   await sendTeacherWelcomeEmail({
     email: profile.email,
     name: profile.full_name || email,
+    actionUrl: `${siteUrl}/profesor/perfil`,
+    isNewAccount: false,
   });
 
   revalidatePath("/admin/coreografos");

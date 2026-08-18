@@ -41,20 +41,21 @@ export function CreateTeacherForm() {
 
         <div>
           <label htmlFor="email" className={labelClass}>
-            Email del usuario (opcional)
+            Email
           </label>
           <input
             id="email"
             name="email"
             type="email"
+            required
             className={inputClass}
             placeholder="andrea@dancebeat.studio"
           />
           <p className={helpClass}>
-            Si la coreógrafa <strong className="text-bone">ya se registró</strong>{" "}
-            con ese email, queda vinculada y promovida a rol{" "}
-            <span className="text-lumen">teacher</span> automáticamente. Si no,
-            se crea sin cuenta y se vincula después.
+            Le llega un correo de <strong className="text-bone">"Ahora eres profesor/a en Dance Beat"</strong>{" "}
+            con el link para crear su contraseña (o entrar directo si ya
+            tenía cuenta) y capturar su contacto de emergencia. Se promueve a
+            rol <span className="text-lumen">teacher</span> automáticamente.
           </p>
         </div>
       </div>

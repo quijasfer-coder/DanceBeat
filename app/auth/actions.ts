@@ -118,6 +118,24 @@ export async function resetPasswordAction(
   if (error) return { error: friendlyError(error.message) };
 
   revalidatePath("/", "layout");
+
+  // Si es una coreógrafa recién invitada (o cualquier teacher recuperando
+  // password), la mandamos directo a completar su perfil en vez de /app —
+  // ahí es donde de verdad tiene que llegar, no al dashboard de alumna.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile?.role === "teacher") {
+      redirect("/profesor/perfil");
+    }
+  }
+
   redirect("/app");
 }
 
