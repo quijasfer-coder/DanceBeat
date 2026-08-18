@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { CreateTeacherForm } from "./create-form";
 import { LinkProfileForm } from "./link-form";
 import { ToggleActive } from "./toggle-active";
+import { DeleteTeacherButton } from "./delete-teacher-button";
 
 export const metadata = {
   title: "Admin · Coreógrafos",
@@ -161,7 +162,14 @@ export default async function AdminCoreografosPage({
                   </div>
 
                   <div className="shrink-0 flex flex-col items-end gap-3">
-                    <ToggleActive teacherId={t.id} active={t.is_active} />
+                    <div className="flex items-center gap-2">
+                      <ToggleActive teacherId={t.id} active={t.is_active} />
+                      <DeleteTeacherButton
+                        teacherId={t.id}
+                        teacherName={t.full_name}
+                        assignedClassesCount={assigned.length}
+                      />
+                    </div>
                   </div>
                 </div>
 

@@ -642,6 +642,53 @@ export async function toggleTeacherActiveAction(
 }
 
 /**
+ * Elimina un coreógrafo del catálogo. Por el FK de `classes.teacher_id`
+ * (on delete set null) las clases que tenía asignadas quedan sin
+ * coreógrafo en vez de borrarse — no se pierde nada de programación,
+ * historial de sesiones ni reservas.
+ *
+ * Si tenía cuenta vinculada con role='teacher', se regresa a 'student'
+ * para que no se quede huérfana viendo el aviso de "cuenta no
+ * vinculada" en /profesor. Un profile con role='admin' no se toca.
+ */
+export async function deleteTeacherAction(
+  teacherId: string,
+): Promise<{ error?: string }> {
+  await requireAdmin("/admin/coreografos");
+  const supabase = await createClient();
+
+  const { data: teacher } = await supabase
+    .from("teachers")
+    .select("profile_id")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  const { error } = await supabase.from("teachers").delete().eq("id", teacherId);
+  if (error) return { error: error.message };
+
+  if (teacher?.profile_id) {
+    const { data: linkedProfile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", teacher.profile_id)
+      .maybeSingle();
+    if (linkedProfile?.role === "teacher") {
+      await supabase
+        .from("profiles")
+        .update({ role: "student" })
+        .eq("id", teacher.profile_id);
+    }
+  }
+
+  revalidatePath("/admin/coreografos");
+  revalidatePath("/admin/clases");
+  revalidatePath("/", "layout");
+  revalidatePath("/clases");
+  revalidatePath("/horarios");
+  return {};
+}
+
+/**
  * Crea un plan nuevo desde /admin/planes/nueva.
  * El campo `code` es un slug único (a-z0-9_-) que el admin captura.
  * Después se puede editar todo lo demás desde /admin/planes/[id]/editar.
