@@ -8,7 +8,6 @@ import {
   Sparkles,
   ArrowRight,
   Clock,
-  MapPin,
   CreditCard,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -17,6 +16,7 @@ import { Avatar } from "@/components/avatar";
 import {
   getActiveSubscriptionsForStudents,
   getMyActiveBookings,
+  type MyBooking,
 } from "@/lib/queries/bookings";
 
 export const metadata = {
@@ -58,7 +58,10 @@ export default async function AppDashboardPage() {
     getMyActiveBookings(studentIds),
   ]);
   const upcomingEventAssignments = eventAssignmentsRes.data;
-  const upcomingBookings = allBookings.slice(0, 3);
+  // El calendario semanal muestra los próximos 7 días completos, no solo
+  // las primeras reservas — a diferencia de la lista anterior no hay que
+  // truncar aquí.
+  const upcomingBookings = allBookings;
 
   const now = new Date();
   const upcomingEvents = (upcomingEventAssignments ?? [])
@@ -252,11 +255,11 @@ export default async function AppDashboardPage() {
         )}
       </section>
 
-      {/* Próximas reservas */}
+      {/* Próximas clases */}
       <section className="mt-16">
         <div className="flex items-center justify-between mb-6">
           <p className="font-mono text-[10px] uppercase tracking-widest text-bone-mute">
-            Próximas reservas{" "}
+            Próximas clases{" "}
             {upcomingBookings.length > 0 && `· ${upcomingBookings.length}`}
           </p>
           <div className="flex items-center gap-3">
@@ -284,46 +287,98 @@ export default async function AppDashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-2">
-            {upcomingBookings.map((b) => {
-              const start = new Date(b.class_sessions.starts_at);
-              const dateStr = start.toLocaleDateString("es-MX", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-              });
-              const timeStr = start.toLocaleTimeString("es-MX", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
-              return (
-                <Link
-                  key={b.id}
-                  href="/app/reservas"
-                  className="flex items-center justify-between gap-4 rounded-xl border border-bone-border/30 bg-ink-off px-5 py-4 hover:border-lumen/40 transition-colors"
-                >
-                  <div className="min-w-0">
-                    <p className="font-display text-base text-bone">
-                      {b.class_sessions.classes.styles.name}
-                    </p>
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-bone-mute mt-1 capitalize flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {dateStr} · {timeStr}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {b.class_sessions.classes.studios.name}
-                      </span>
-                    </p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-bone-mute shrink-0" />
-                </Link>
-              );
-            })}
-          </div>
+          <WeekCalendar bookings={upcomingBookings} />
         )}
       </section>
+    </div>
+  );
+}
+
+const weekDayLabels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+function startOfDay(d: Date): Date {
+  const copy = new Date(d);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/**
+ * Franja de 7 días (hoy + 6) con las clases reservadas de cada día.
+ * Las clases fijas se repiten semana a semana, así que esta vista de
+ * calendario refleja mejor el ritmo real de la alumna que una lista.
+ */
+function WeekCalendar({ bookings }: { bookings: MyBooking[] }) {
+  const today = startOfDay(new Date());
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    return date;
+  });
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      {days.map((day) => {
+        const dayBookings = bookings.filter((b) =>
+          sameDay(new Date(b.class_sessions.starts_at), day),
+        );
+        const isToday = sameDay(day, today);
+
+        return (
+          <div
+            key={day.toISOString()}
+            className={`rounded-2xl border p-4 min-h-[120px] ${
+              isToday
+                ? "border-lumen/40 bg-lumen/5"
+                : "border-bone-border/30 bg-ink-off"
+            }`}
+          >
+            <p
+              className={`font-mono text-[10px] uppercase tracking-widest mb-3 ${
+                isToday ? "text-lumen" : "text-bone-mute"
+              }`}
+            >
+              {weekDayLabels[(day.getDay() + 6) % 7]} · {day.getDate()}
+            </p>
+
+            {dayBookings.length === 0 ? (
+              <p className="text-xs text-bone-mute/50">—</p>
+            ) : (
+              <div className="space-y-2">
+                {dayBookings.map((b) => {
+                  const timeStr = new Date(
+                    b.class_sessions.starts_at,
+                  ).toLocaleTimeString("es-MX", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  return (
+                    <Link
+                      key={b.id}
+                      href="/app/reservas"
+                      className="block rounded-lg border border-bone-border/30 bg-ink px-3 py-2 hover:border-lumen/40 transition-colors"
+                    >
+                      <p className="text-sm text-bone truncate">
+                        {b.class_sessions.classes.styles.name}
+                      </p>
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-bone-mute mt-1">
+                        {timeStr}
+                      </p>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
