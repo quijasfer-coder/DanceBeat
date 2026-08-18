@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { sendTeacherWelcomeEmail } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 import type { Database } from "@/lib/database.types";
 
 type DanceLevel = Database["public"]["Enums"]["dance_level"];
@@ -481,8 +482,7 @@ export async function createTeacherAction(
     return { error: "El email es obligatorio — se usa para invitarla a crear su cuenta." };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://dancebeat.studio";
-  const perfilUrl = `${siteUrl}/profesor/perfil`;
+  const perfilUrl = `${SITE_URL}/profesor/perfil`;
 
   const { data: existingProfile } = await supabase
     .from("profiles")
@@ -519,7 +519,7 @@ export async function createTeacherAction(
         email,
         options: {
           data: { full_name: fullName },
-          redirectTo: `${siteUrl}/auth/callback?type=invite`,
+          redirectTo: `${SITE_URL}/auth/callback?type=invite`,
         },
       });
 
@@ -613,13 +613,11 @@ export async function linkTeacherProfileAction(
     if (rErr) return { error: `Profile: ${rErr.message}` };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://dancebeat.studio";
-
   // No bloquea la vinculación si el correo falla — solo se loguea.
   await sendTeacherWelcomeEmail({
     email: profile.email,
     name: profile.full_name || email,
-    actionUrl: `${siteUrl}/profesor/perfil`,
+    actionUrl: `${SITE_URL}/profesor/perfil`,
     isNewAccount: false,
   });
 

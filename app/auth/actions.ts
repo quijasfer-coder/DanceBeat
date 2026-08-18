@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { SITE_URL } from "@/lib/site";
 
 export type AuthState = { error?: string } | null;
 
@@ -47,16 +48,13 @@ export async function signUpAction(
     return { error: "La contraseña debe tener al menos 8 caracteres." };
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://dance-beat-tau.vercel.app";
-
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { full_name: fullName, phone },
-      emailRedirectTo: `${siteUrl}/auth/callback?type=signup`,
+      emailRedirectTo: `${SITE_URL}/auth/callback?type=signup`,
     },
   });
 
@@ -84,12 +82,9 @@ export async function recoverPasswordAction(
   const email = (formData.get("email") as string)?.trim();
   if (!email) return { error: "Email es requerido." };
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://dance-beat-tau.vercel.app";
-
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/auth/callback?type=recovery`,
+    redirectTo: `${SITE_URL}/auth/callback?type=recovery`,
   });
 
   if (error) return { error: friendlyError(error.message) };
