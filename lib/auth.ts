@@ -19,7 +19,12 @@ export function getAccountGateRedirect(
 ): string | null {
   if (profile.account_status === "pending") return "/app/pendiente";
   if (profile.account_status === "rejected") return "/app/rechazado";
-  if (!hasEnrolledStudent) return "/app/inscripcion";
+  if (!hasEnrolledStudent) {
+    // Un coreógrafo sin alumnos propios inscritos no debe caer en el flujo
+    // de inscripción de alumna — ese gate es para cuentas de papá/mamá.
+    // Si además tiene un alumno inscrito (rol dual), sigue el flujo normal.
+    return profile.role === "teacher" ? "/profesor" : "/app/inscripcion";
+  }
   return null;
 }
 
