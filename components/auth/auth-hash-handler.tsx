@@ -54,7 +54,11 @@ export function AuthHashHandler() {
 
     if (!accessToken || !type) return;
 
-    if (type === "recovery") {
+    // "recovery" (olvidé mi contraseña) e "invite" (coreógrafa invitada
+    // desde /admin/coreografos) terminan en la misma pantalla: crear
+    // contraseña. Sin "invite" aquí, el link de invitación caía en el
+    // home sin hacer nada — mismo bug que ya pasaba con recovery.
+    if (type === "recovery" || type === "invite") {
       // Establecemos la sesión manualmente y redirigimos al formulario
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
