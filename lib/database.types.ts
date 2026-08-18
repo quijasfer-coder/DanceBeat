@@ -343,6 +343,42 @@ export type Database = {
           },
         ]
       }
+      enrollment_types: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price_cents: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       event_assignments: {
         Row: {
           attended_at: string | null
@@ -590,42 +626,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      enrollment_types: {
-        Row: {
-          code: string
-          created_at: string
-          description: string | null
-          display_order: number
-          id: string
-          is_active: boolean
-          name: string
-          price_cents: number
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          id?: string
-          is_active?: boolean
-          name: string
-          price_cents: number
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          id?: string
-          is_active?: boolean
-          name?: string
-          price_cents?: number
-          updated_at?: string
-        }
-        Relationships: []
       }
       plans: {
         Row: {
@@ -1116,6 +1116,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _generate_class_sessions: {
+        Args: { p_class_id: string; p_weeks_ahead?: number }
+        Returns: number
+      }
       approve_account: {
         Args: { p_account_id: string }
         Returns: {
@@ -1143,6 +1147,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assign_fixed_class: {
+        Args: { p_class_id: string; p_student_id: string }
+        Returns: number
+      }
       book_class: {
         Args: { p_session_id: string; p_student_id: string }
         Returns: {
@@ -1153,6 +1161,7 @@ export type Database = {
           created_at: string
           credit_returned: boolean
           id: string
+          is_fixed: boolean
           notes: string | null
           session_id: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -1165,10 +1174,6 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
-      }
-      assign_fixed_class: {
-        Args: { p_class_id: string; p_student_id: string }
-        Returns: number
       }
       bulk_assign_event_by_class: {
         Args: { p_class_id: string; p_event_id: string }
@@ -1202,6 +1207,13 @@ export type Database = {
         Args: { p_class_id: string; p_weeks_ahead?: number }
         Returns: number
       }
+      generate_sessions_all_active_classes: {
+        Args: { p_weeks_ahead?: number }
+        Returns: {
+          class_id: string
+          sessions_created: number
+        }[]
+      }
       get_setting: {
         Args: { p_default?: string; p_key: string }
         Returns: string
@@ -1223,6 +1235,7 @@ export type Database = {
           created_at: string
           credit_returned: boolean
           id: string
+          is_fixed: boolean
           notes: string | null
           session_id: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -1237,7 +1250,7 @@ export type Database = {
         }
       }
       mark_enrollment_paid: {
-        Args: { p_student_id: string; p_method: string }
+        Args: { p_method: string; p_student_id: string }
         Returns: {
           account_id: string
           birthdate: string
@@ -1284,6 +1297,7 @@ export type Database = {
           created_at: string
           credit_returned: boolean
           id: string
+          is_fixed: boolean
           notes: string | null
           session_id: string
           status: Database["public"]["Enums"]["booking_status"]
