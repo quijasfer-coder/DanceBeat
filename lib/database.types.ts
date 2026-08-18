@@ -1032,6 +1032,8 @@ export type Database = {
         Row: {
           bio_internal: string | null
           created_at: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           full_name: string
           hire_date: string | null
           id: string
@@ -1042,6 +1044,8 @@ export type Database = {
         Insert: {
           bio_internal?: string | null
           created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name: string
           hire_date?: string | null
           id?: string
@@ -1052,6 +1056,8 @@ export type Database = {
         Update: {
           bio_internal?: string | null
           created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string
           hire_date?: string | null
           id?: string

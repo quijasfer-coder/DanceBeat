@@ -33,6 +33,12 @@ export default async function ProfesorLayout({
           </Link>
 
           <div className="flex items-center gap-6">
+            <Link
+              href="/profesor/perfil"
+              className="text-sm text-bone-mute hover:text-bone transition-colors"
+            >
+              Mi perfil
+            </Link>
             <RoleSwitcher modes={modes} current="teacher" />
             <p className="text-sm text-bone-mute">
               <span className="text-bone">{profile.full_name}</span>

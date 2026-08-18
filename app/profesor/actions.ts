@@ -40,6 +40,48 @@ export async function ensureSessionsAction(
 }
 
 /**
+ * Actualiza el propio perfil del coreógrafo logueado: nombre, foto y
+ * contacto de emergencia. El RLS de `teachers_update_own` solo deja
+ * tocar la fila cuyo profile_id sea el del usuario en sesión.
+ */
+export async function updateOwnTeacherProfileAction(
+  _prev: ProfesorActionState,
+  formData: FormData,
+): Promise<ProfesorActionState> {
+  const profile = await requireTeacher("/profesor/perfil");
+  const supabase = await createClient();
+
+  const fullName = (formData.get("full_name") as string)?.trim();
+  const photoUrl = ((formData.get("photo_url") as string) ?? "").trim();
+  const emergencyName = (
+    (formData.get("emergency_contact_name") as string) ?? ""
+  ).trim();
+  const emergencyPhone = (
+    (formData.get("emergency_contact_phone") as string) ?? ""
+  ).trim();
+
+  if (!fullName) {
+    return { error: "El nombre es obligatorio." };
+  }
+
+  const { error } = await supabase
+    .from("teachers")
+    .update({
+      full_name: fullName,
+      photo_url: photoUrl || null,
+      emergency_contact_name: emergencyName || null,
+      emergency_contact_phone: emergencyPhone || null,
+    })
+    .eq("profile_id", profile.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/profesor/perfil");
+  revalidatePath("/profesor");
+  return { success: "Perfil actualizado." };
+}
+
+/**
  * Marca asistencia o no_show de una reserva.
  * El RPC valida internamente que el caller sea el profesor de la sesión.
  */
