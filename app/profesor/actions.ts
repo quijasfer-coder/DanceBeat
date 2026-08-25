@@ -103,3 +103,30 @@ export async function markAttendanceAction(
   revalidatePath(`/profesor/sesion/${sessionId}`);
   return {};
 }
+
+/**
+ * Marca asistencia de una alumna de clase fija que aún no tiene booking
+ * en esta sesión (típicamente por no tener plan/crédito activo). Crea el
+ * booking con credit_charged=false — no consume crédito ni representa un
+ * pago. El RPC valida que el caller sea el profesor de la sesión y que
+ * la alumna esté en class_enrollments de esa clase.
+ */
+export async function markAttendanceForEnrollmentAction(
+  studentId: string,
+  sessionId: string,
+  attended: boolean,
+): Promise<{ error?: string; bookingId?: string }> {
+  await requireTeacher(`/profesor/sesion/${sessionId}`);
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("mark_attendance_for_enrollment", {
+    p_student_id: studentId,
+    p_session_id: sessionId,
+    p_attended: attended,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/profesor/sesion/${sessionId}`);
+  return { bookingId: data?.id };
+}

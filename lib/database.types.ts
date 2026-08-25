@@ -108,6 +108,7 @@ export type Database = {
           booked_at: string
           cancelled_at: string | null
           created_at: string
+          credit_charged: boolean
           credit_returned: boolean
           id: string
           is_fixed: boolean
@@ -123,6 +124,7 @@ export type Database = {
           booked_at?: string
           cancelled_at?: string | null
           created_at?: string
+          credit_charged?: boolean
           credit_returned?: boolean
           id?: string
           is_fixed?: boolean
@@ -138,6 +140,7 @@ export type Database = {
           booked_at?: string
           cancelled_at?: string | null
           created_at?: string
+          credit_charged?: boolean
           credit_returned?: boolean
           id?: string
           is_fixed?: boolean
@@ -1122,6 +1125,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _autobook_fixed_enrollments_for_session: {
+        Args: { p_session_id: string }
+        Returns: number
+      }
       _generate_class_sessions: {
         Args: { p_class_id: string; p_weeks_ahead?: number }
         Returns: number
@@ -1165,6 +1172,7 @@ export type Database = {
           booked_at: string
           cancelled_at: string | null
           created_at: string
+          credit_charged: boolean
           credit_returned: boolean
           id: string
           is_fixed: boolean
@@ -1193,6 +1201,7 @@ export type Database = {
           booked_at: string
           cancelled_at: string | null
           created_at: string
+          credit_charged: boolean
           credit_returned: boolean
           id: string
           is_fixed: boolean
@@ -1239,6 +1248,36 @@ export type Database = {
           booked_at: string
           cancelled_at: string | null
           created_at: string
+          credit_charged: boolean
+          credit_returned: boolean
+          id: string
+          is_fixed: boolean
+          notes: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["booking_status"]
+          student_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      mark_attendance_for_enrollment: {
+        Args: {
+          p_attended: boolean
+          p_session_id: string
+          p_student_id: string
+        }
+        Returns: {
+          attended_at: string | null
+          attended_by: string | null
+          booked_at: string
+          cancelled_at: string | null
+          created_at: string
+          credit_charged: boolean
           credit_returned: boolean
           id: string
           is_fixed: boolean
@@ -1301,6 +1340,7 @@ export type Database = {
           booked_at: string
           cancelled_at: string | null
           created_at: string
+          credit_charged: boolean
           credit_returned: boolean
           id: string
           is_fixed: boolean

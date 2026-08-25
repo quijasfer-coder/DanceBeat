@@ -1,17 +1,23 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, X, AlertCircle, Loader2 } from "lucide-react";
-import { markAttendanceAction } from "@/app/profesor/actions";
+import { Check, X, AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
+import {
+  markAttendanceAction,
+  markAttendanceForEnrollmentAction,
+} from "@/app/profesor/actions";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/avatar";
 import type { Database } from "@/lib/database.types";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
+type PlanStatus = "ok" | "sin_plan" | "sin_cupo";
 
 type Item = {
-  bookingId: string;
-  status: BookingStatus;
+  bookingId: string | null;
+  studentId: string;
+  status: BookingStatus | null;
+  planStatus: PlanStatus;
   studentName: string;
   photoUrl: string | null;
   birthdate: string;
@@ -38,25 +44,38 @@ export function AttendanceList({
 }) {
   // Optimistic local state — la acción llama revalidatePath para
   // sincronizar con BD al final, pero queremos feedback inmediato.
-  const [localStatus, setLocalStatus] = useState<Record<string, BookingStatus>>(
-    Object.fromEntries(items.map((it) => [it.bookingId, it.status])),
+  const [localStatus, setLocalStatus] = useState<
+    Record<string, BookingStatus | null>
+  >(Object.fromEntries(items.map((it) => [it.studentId, it.status])));
+  const [bookingIds, setBookingIds] = useState<Record<string, string | null>>(
+    Object.fromEntries(items.map((it) => [it.studentId, it.bookingId])),
   );
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const update = (bookingId: string, attended: boolean) => {
+  const update = (studentId: string, attended: boolean) => {
     setError(null);
-    setPendingId(bookingId);
-    const previous = localStatus[bookingId];
+    setPendingId(studentId);
+    const previous = localStatus[studentId];
     const next: BookingStatus = attended ? "attended" : "no_show";
-    setLocalStatus((s) => ({ ...s, [bookingId]: next }));
+    setLocalStatus((s) => ({ ...s, [studentId]: next }));
 
     startTransition(async () => {
-      const res = await markAttendanceAction(bookingId, attended, sessionId);
+      const existingBookingId = bookingIds[studentId];
+      const res: { error?: string; bookingId?: string } = existingBookingId
+        ? await markAttendanceAction(existingBookingId, attended, sessionId)
+        : await markAttendanceForEnrollmentAction(
+            studentId,
+            sessionId,
+            attended,
+          );
+
       if (res.error) {
         setError(res.error);
-        setLocalStatus((s) => ({ ...s, [bookingId]: previous }));
+        setLocalStatus((s) => ({ ...s, [studentId]: previous }));
+      } else if (!existingBookingId && res.bookingId) {
+        setBookingIds((s) => ({ ...s, [studentId]: res.bookingId! }));
       }
       setPendingId(null);
     });
@@ -72,13 +91,13 @@ export function AttendanceList({
       )}
 
       {items.map((it) => {
-        const status = localStatus[it.bookingId];
-        const isPending = pendingId === it.bookingId;
+        const status = localStatus[it.studentId];
+        const isPending = pendingId === it.studentId;
         const age = calcAge(it.birthdate);
 
         return (
           <div
-            key={it.bookingId}
+            key={it.studentId}
             className={cn(
               "rounded-xl border p-4 flex items-center gap-4 transition-colors",
               status === "attended"
@@ -91,9 +110,24 @@ export function AttendanceList({
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <Avatar src={it.photoUrl} name={it.studentName} size={44} />
               <div className="min-w-0">
-                <p className="font-display text-lg text-bone truncate">
-                  {it.studentName}
-                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-display text-lg text-bone truncate">
+                    {it.studentName}
+                  </p>
+                  {it.planStatus !== "ok" && (
+                    <span
+                      className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-warning/15 text-warning shrink-0"
+                      title={
+                        it.planStatus === "sin_plan"
+                          ? "Asignada a la clase pero sin plan/crédito activo — no se cobró"
+                          : "Tiene plan activo pero la clase estaba llena cuando se generó — reservar manualmente si hay lugar"
+                      }
+                    >
+                      <AlertTriangle className="w-2.5 h-2.5" />
+                      {it.planStatus === "sin_plan" ? "Sin plan activo" : "Sin cupo asignado"}
+                    </span>
+                  )}
+                </div>
                 <p className="font-mono text-[10px] uppercase tracking-wider text-bone-mute mt-1">
                   {age} años
                   {it.school ? ` · ${it.school}` : ""}
@@ -111,7 +145,7 @@ export function AttendanceList({
               <button
                 type="button"
                 disabled={isPending}
-                onClick={() => update(it.bookingId, true)}
+                onClick={() => update(it.studentId, true)}
                 className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium border transition-colors disabled:opacity-50",
                   status === "attended"
@@ -131,7 +165,7 @@ export function AttendanceList({
               <button
                 type="button"
                 disabled={isPending}
-                onClick={() => update(it.bookingId, false)}
+                onClick={() => update(it.studentId, false)}
                 className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium border transition-colors disabled:opacity-50",
                   status === "no_show"

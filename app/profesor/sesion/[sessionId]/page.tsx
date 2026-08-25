@@ -55,7 +55,7 @@ export default async function ProfesorSesionPage({ params }: PageProps) {
     }
   }
 
-  const [styleRes, studioRes, bookingsRes] = await Promise.all([
+  const [styleRes, studioRes, bookingsRes, enrollmentsRes] = await Promise.all([
     supabase
       .from("styles")
       .select("name")
@@ -72,16 +72,39 @@ export default async function ProfesorSesionPage({ params }: PageProps) {
       .eq("session_id", sessionId)
       .in("status", ["confirmed", "attended", "no_show"])
       .order("booked_at", { ascending: true }),
+    supabase
+      .from("class_enrollments")
+      .select("student_id")
+      .eq("class_id", danceClass.id),
   ]);
 
   const bookings = bookingsRes.data ?? [];
   const studentIds = bookings.map((b) => b.student_id);
+  const bookedStudentIds = new Set(studentIds);
 
-  const { data: students } = studentIds.length
-    ? await supabase.from("students").select("*").in("id", studentIds)
+  // Alumnas con clase fija asignada que todavía no tienen booking en esta
+  // sesión — normalmente porque no tienen plan/crédito activo. Igual deben
+  // aparecer en el pase de lista: la profe las tiene enfrente en el salón.
+  const unbookedStudentIds = (enrollmentsRes.data ?? [])
+    .map((e) => e.student_id)
+    .filter((id) => !bookedStudentIds.has(id));
+
+  const allStudentIds = [...studentIds, ...unbookedStudentIds];
+
+  const { data: students } = allStudentIds.length
+    ? await supabase.from("students").select("*").in("id", allStudentIds)
     : { data: [] };
 
   const studentMap = new Map((students ?? []).map((s) => [s.id, s]));
+
+  const { data: activeSubs } = unbookedStudentIds.length
+    ? await supabase
+        .from("subscriptions")
+        .select("student_id")
+        .eq("status", "active")
+        .in("student_id", unbookedStudentIds)
+    : { data: [] };
+  const activeSubStudentIds = new Set((activeSubs ?? []).map((s) => s.student_id));
 
   const startsAt = new Date(session.starts_at);
   const dateStr = startsAt.toLocaleDateString("es-MX", {
@@ -97,17 +120,42 @@ export default async function ProfesorSesionPage({ params }: PageProps) {
 
   const attendedCount = bookings.filter((b) => b.status === "attended").length;
   const noShowCount = bookings.filter((b) => b.status === "no_show").length;
-  const pendingCount = bookings.filter((b) => b.status === "confirmed").length;
+  const pendingCount =
+    bookings.filter((b) => b.status === "confirmed").length +
+    unbookedStudentIds.length;
 
-  const items = bookings
+  type PlanStatus = "ok" | "sin_plan" | "sin_cupo";
+
+  const bookedItems = bookings
     .map((b) => ({
-      booking: b,
+      bookingId: b.id as string | null,
+      studentId: b.student_id,
+      status: b.status as string | null,
       student: studentMap.get(b.student_id) ?? null,
+      planStatus: (b.credit_charged === false
+        ? "sin_plan"
+        : "ok") as PlanStatus,
     }))
-    .filter((it) => it.student !== null)
-    .sort((a, b) =>
-      (a.student!.full_name).localeCompare(b.student!.full_name, "es"),
-    );
+    .filter((it) => it.student !== null);
+
+  // Alumnas de clase fija sin booking aún — casi siempre porque no tienen
+  // plan/crédito activo; en el raro caso de que sí tengan crédito pero la
+  // sesión se llenó de cupo antes de asignarlas, se marca distinto.
+  const unbookedItems = unbookedStudentIds
+    .map((id) => ({
+      bookingId: null as string | null,
+      studentId: id,
+      status: null as string | null,
+      student: studentMap.get(id) ?? null,
+      planStatus: (activeSubStudentIds.has(id)
+        ? "sin_cupo"
+        : "sin_plan") as PlanStatus,
+    }))
+    .filter((it) => it.student !== null);
+
+  const items = [...bookedItems, ...unbookedItems].sort((a, b) =>
+    a.student!.full_name.localeCompare(b.student!.full_name, "es"),
+  );
 
   return (
     <div className="container py-12 max-w-4xl">
@@ -151,15 +199,21 @@ export default async function ProfesorSesionPage({ params }: PageProps) {
         <div className="glass rounded-2xl p-12 text-center">
           <Users className="w-8 h-8 text-bone-mute mx-auto mb-4" />
           <p className="text-bone-mute">
-            Aún no hay reservas para esta sesión.
+            Aún no hay alumnas reservadas ni asignadas a esta clase.
           </p>
         </div>
       ) : (
         <AttendanceList
           sessionId={sessionId}
           items={items.map((it) => ({
-            bookingId: it.booking.id,
-            status: it.booking.status,
+            bookingId: it.bookingId,
+            studentId: it.studentId,
+            status: it.status as
+              | "confirmed"
+              | "attended"
+              | "no_show"
+              | null,
+            planStatus: it.planStatus,
             studentName: it.student!.full_name,
             photoUrl: it.student!.photo_url,
             birthdate: it.student!.birthdate,
