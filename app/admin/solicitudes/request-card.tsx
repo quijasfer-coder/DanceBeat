@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   Mail,
   Phone,
@@ -9,6 +10,7 @@ import {
   Check,
   X,
   AlertCircle,
+  UserPlus,
 } from "lucide-react";
 import {
   approveAccountAction,
@@ -106,7 +108,7 @@ export function RequestCard({
         {students.length === 0 ? (
           <p className="text-xs text-warning italic">
             Aún no agrega a quién toma clases. Puedes aprobar igualmente — la
-            alumna terminará el onboarding después.
+            alumna terminará el onboarding después, o captúrala tú mismo abajo.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -145,6 +147,13 @@ export function RequestCard({
             })}
           </ul>
         )}
+        <Link
+          href={`/admin/alumnos/nueva?accountId=${accountId}&returnTo=${encodeURIComponent("/admin/solicitudes")}`}
+          className="inline-flex items-center gap-1.5 text-xs text-lumen hover:underline mt-3"
+        >
+          <UserPlus className="w-3.5 h-3.5" />
+          {students.length === 0 ? "Capturar alumna" : "Agregar otra alumna"}
+        </Link>
       </div>
 
       {error && (

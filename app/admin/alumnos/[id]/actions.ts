@@ -348,3 +348,56 @@ export async function sendPaymentReceiptAction(
 
   return {};
 }
+
+export type AdminUpdateStudentState = { error?: string; success?: string } | null;
+
+/**
+ * El admin corrige/completa los datos básicos de una alumna — pensado
+ * para cuando el padre capturó algo mal o dejó campos vacíos y no
+ * regresa a corregirlos él mismo. La policy students_update_own_or_admin
+ * ya permite este update sin necesidad de service role.
+ */
+export async function adminUpdateStudentAction(
+  studentId: string,
+  _prev: AdminUpdateStudentState,
+  formData: FormData,
+): Promise<AdminUpdateStudentState> {
+  await requireAdmin("/admin/alumnos");
+  const supabase = await createClient();
+
+  const fullName = (formData.get("full_name") as string)?.trim();
+  const birthdate = (formData.get("birthdate") as string)?.trim();
+  if (!fullName || !birthdate) {
+    return { error: "Nombre y fecha de nacimiento son obligatorios." };
+  }
+
+  const { error } = await supabase
+    .from("students")
+    .update({
+      full_name: fullName,
+      birthdate,
+      phone: ((formData.get("phone") as string) ?? "").trim() || null,
+      school: ((formData.get("school") as string) ?? "").trim() || null,
+      grade: ((formData.get("grade") as string) ?? "").trim() || null,
+      notes: ((formData.get("notes") as string) ?? "").trim() || null,
+      emergency_contact_name:
+        ((formData.get("emergency_contact_name") as string) ?? "").trim() ||
+        null,
+      emergency_contact_phone:
+        ((formData.get("emergency_contact_phone") as string) ?? "").trim() ||
+        null,
+      mother_name: ((formData.get("mother_name") as string) ?? "").trim() || null,
+      mother_phone:
+        ((formData.get("mother_phone") as string) ?? "").trim() || null,
+      father_name: ((formData.get("father_name") as string) ?? "").trim() || null,
+      father_phone:
+        ((formData.get("father_phone") as string) ?? "").trim() || null,
+    })
+    .eq("id", studentId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/alumnos/${studentId}`);
+  revalidatePath("/admin/alumnos");
+  return { success: "Datos actualizados." };
+}

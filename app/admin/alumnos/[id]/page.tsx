@@ -24,6 +24,7 @@ import { formatMxn } from "@/lib/format";
 import { SubscriptionForm } from "./subscription-form";
 import { CreditControls } from "./credit-controls";
 import { EnrollmentTypeSelect } from "./enrollment-type-select";
+import { BasicInfoForm } from "./basic-info-form";
 import { EnrollmentMethodEdit } from "./enrollment-method-edit";
 import { FixedClassesSection } from "./fixed-classes-section";
 import { SendReceiptButton } from "./send-receipt-button";
@@ -64,11 +65,14 @@ function calcAge(birthdate: string): number {
 
 export default async function AdminAlumnoDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ creada?: string; return_to?: string }>;
 }) {
   await requireAdmin("/admin/alumnos");
   const { id } = await params;
+  const { creada, return_to } = await searchParams;
   const supabase = await createClient();
 
   const { data: student } = await supabase
@@ -245,6 +249,22 @@ export default async function AdminAlumnoDetailPage({
         Volver al listado
       </Link>
 
+      {creada === "1" && (
+        <div className="flex items-center justify-between gap-4 rounded-2xl border border-success/30 bg-success/10 px-5 py-3 mb-6 flex-wrap">
+          <p className="text-sm text-success">
+            Alumna registrada correctamente.
+          </p>
+          {return_to && (
+            <Link
+              href={return_to}
+              className="text-xs font-mono uppercase tracking-wider text-success hover:underline shrink-0"
+            >
+              Volver
+            </Link>
+          )}
+        </div>
+      )}
+
       <div className="mb-10 flex items-center gap-5">
         <Avatar src={student.photo_url} name={student.full_name} size={72} />
         <div>
@@ -259,6 +279,8 @@ export default async function AdminAlumnoDetailPage({
           )}
         </div>
       </div>
+
+      <BasicInfoForm student={student} />
 
       {/* Estado de la cuenta del titular (aprobación) */}
       {profile && (
