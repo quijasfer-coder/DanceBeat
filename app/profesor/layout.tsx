@@ -39,7 +39,10 @@ export default async function ProfesorLayout({
             >
               Mi perfil
             </Link>
-            <RoleSwitcher modes={modes} current="teacher" />
+            <RoleSwitcher
+              modes={modes}
+              current={profile.role === "admin" ? "admin" : "teacher"}
+            />
             <p className="text-sm text-bone-mute">
               <span className="text-bone">{profile.full_name}</span>
             </p>

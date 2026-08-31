@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CheckCircle2, UserCog, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
@@ -109,9 +110,12 @@ export default async function AdminCoreografosPage({
               >
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex-1 min-w-0">
-                    <p className="font-display text-2xl text-bone">
+                    <Link
+                      href={`/admin/coreografos/${t.id}`}
+                      className="font-display text-2xl text-bone hover:text-lumen transition-colors"
+                    >
                       {t.full_name}
-                    </p>
+                    </Link>
 
                     {profile ? (
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
