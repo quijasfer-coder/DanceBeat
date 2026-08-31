@@ -172,9 +172,13 @@ export default async function AdminAlumnosPage({
   const baseList = showInactive ? inactiveStudents : activeStudents;
 
   const searched = q
-    ? baseList.filter((s) =>
-        s.full_name.toLowerCase().includes(q.toLowerCase()),
-      )
+    ? baseList.filter((s) => {
+        const nameTokens = normalizeSearch(s.full_name).split(" ").filter(Boolean);
+        const queryTokens = normalizeSearch(q).split(" ").filter(Boolean);
+        return queryTokens.every((qt) =>
+          nameTokens.some((nt) => nt.includes(qt)),
+        );
+      })
     : baseList;
 
   // Enriquecer cada alumna con lo que necesitamos para mostrar/ordenar/filtrar
@@ -701,6 +705,14 @@ function FilterSelect({
       </select>
     </div>
   );
+}
+
+function normalizeSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 function calcAge(birthdate: string): number {

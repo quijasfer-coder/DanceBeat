@@ -70,7 +70,8 @@ export function OnboardingForm({
   const [motherPhone, setMotherPhone] = useState("");
   const [fatherName, setFatherName] = useState("");
   const [fatherPhone, setFatherPhone] = useState("");
-  const [photoVideoConsent, setPhotoVideoConsent] = useState(false);
+  // Requerido: no se puede dar de alta sin autorizar fotos/video.
+  const [photoVideoConsent] = useState(true);
 
   const [state, formAction, pending] = useActionState<OnboardingState, FormData>(
     createStudentsAction,
@@ -508,14 +509,15 @@ export function OnboardingForm({
         </div>
       </section>
 
-      {/* ─── Consentimiento de fotos/video ───────── */}
+      {/* ─── Consentimiento de fotos/video (obligatorio) ───────── */}
       <section className="rounded-2xl border border-bone-border/40 p-6">
-        <label className="flex items-start gap-3 cursor-pointer">
+        <label className="flex items-start gap-3 cursor-not-allowed">
           <input
             type="checkbox"
             checked={photoVideoConsent}
-            onChange={(e) => setPhotoVideoConsent(e.target.checked)}
-            className="w-4 h-4 mt-0.5 rounded border-bone-border/60 bg-ink-surface text-lumen focus:ring-lumen/30 cursor-pointer shrink-0"
+            disabled
+            aria-disabled="true"
+            className="w-4 h-4 mt-0.5 rounded border-bone-border/60 bg-ink-surface text-lumen focus:ring-lumen/30 shrink-0 cursor-not-allowed opacity-90"
           />
           <span className="text-sm text-bone-mute leading-relaxed">
             Estoy de acuerdo con que la academia de baile &ldquo;Dance
@@ -525,6 +527,9 @@ export function OnboardingForm({
             sociales y pagina web de la academia de baile &ldquo;Dance
             Beat&rdquo;, entendiendo que son accesibles a cualquier persona
             conectada a internet.
+            <span className="block mt-1 text-xs text-bone-mute/70">
+              Esta autorización es obligatoria para completar el registro.
+            </span>
           </span>
         </label>
       </section>
