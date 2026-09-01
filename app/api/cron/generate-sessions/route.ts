@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { createAdminClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error("[cron/generate-sessions] falló:", error);
+    Sentry.captureException(new Error(`cron/generate-sessions: ${error.message}`));
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
