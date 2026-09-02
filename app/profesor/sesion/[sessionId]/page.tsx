@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireTeacher } from "@/lib/auth";
+import { formatDateMX, formatTimeMX } from "@/lib/format";
 import { AttendanceList } from "./attendance-list";
 
 export const metadata = {
@@ -106,17 +107,13 @@ export default async function ProfesorSesionPage({ params }: PageProps) {
     : { data: [] };
   const activeSubStudentIds = new Set((activeSubs ?? []).map((s) => s.student_id));
 
-  const startsAt = new Date(session.starts_at);
-  const dateStr = startsAt.toLocaleDateString("es-MX", {
+  const dateStr = formatDateMX(session.starts_at, {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
-  const timeStr = startsAt.toLocaleTimeString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const timeStr = formatTimeMX(session.starts_at);
 
   const attendedCount = bookings.filter((b) => b.status === "attended").length;
   const noShowCount = bookings.filter((b) => b.status === "no_show").length;

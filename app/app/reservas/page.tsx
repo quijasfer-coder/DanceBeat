@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireApprovedAccount } from "@/lib/auth";
 import { getMyActiveBookings, getActiveSubscriptionsForStudents } from "@/lib/queries/bookings";
 import { getSetting } from "@/lib/queries/settings";
+import { formatDateMX, formatTimeMX } from "@/lib/format";
 import { CancelButton } from "./cancel-button";
 
 export const metadata = {
@@ -105,15 +106,12 @@ export default async function MisReservasPage() {
         <div className="space-y-3">
           {bookings.map((b) => {
             const start = new Date(b.class_sessions.starts_at);
-            const dateStr = start.toLocaleDateString("es-MX", {
+            const dateStr = formatDateMX(start, {
               weekday: "long",
               day: "numeric",
               month: "long",
             });
-            const timeStr = start.toLocaleTimeString("es-MX", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+            const timeStr = formatTimeMX(start);
             const hoursUntil =
               (start.getTime() - Date.now()) / (1000 * 60 * 60);
             const isLate = hoursUntil < cancelWindow;

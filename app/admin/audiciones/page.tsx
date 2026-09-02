@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { getSettings } from "@/lib/queries/settings";
 import { cn } from "@/lib/utils";
+import { formatDateMX } from "@/lib/format";
 import type { Database } from "@/lib/database.types";
 import { AuditionsToggle } from "./auditions-toggle";
 import { ClosedMessageForm } from "./closed-message-form";
@@ -142,7 +143,7 @@ export default async function AdminAudicionesPage({
       ) : (
         <div className="space-y-3">
           {filtered.map((a) => {
-            const date = new Date(a.created_at).toLocaleDateString("es-MX", {
+            const date = formatDateMX(a.created_at, {
               day: "numeric",
               month: "short",
               year: "numeric",

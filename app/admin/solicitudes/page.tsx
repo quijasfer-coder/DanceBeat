@@ -3,6 +3,7 @@ import { Inbox, Check, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { formatDateMX } from "@/lib/format";
 import { RequestCard } from "./request-card";
 
 export const metadata = {
@@ -134,13 +135,13 @@ export default async function AdminSolicitudesPage({
             // Vista compacta para aprobadas/rechazadas
             const isApproved = filter === "approved";
             const dateLabel = isApproved && p.approved_at
-              ? new Date(p.approved_at).toLocaleDateString("es-MX", {
+              ? formatDateMX(p.approved_at, {
                   day: "numeric",
                   month: "short",
                   year: "numeric",
                 })
               : !isApproved && p.rejected_at
-                ? new Date(p.rejected_at).toLocaleDateString("es-MX", {
+                ? formatDateMX(p.rejected_at, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",

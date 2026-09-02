@@ -20,7 +20,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/avatar";
 import { requireAdmin } from "@/lib/auth";
 import { getSettings } from "@/lib/queries/settings";
-import { formatMxn } from "@/lib/format";
+import { formatMxn, formatDateMX } from "@/lib/format";
 import { SubscriptionForm } from "./subscription-form";
 import { CreditControls } from "./credit-controls";
 import { EnrollmentTypeSelect } from "./enrollment-type-select";
@@ -296,7 +296,7 @@ export default async function AdminAlumnoDetailPage({
               {profile.account_status === "approved" && profile.approved_at && (
                 <p className="text-xs text-bone-mute mt-2">
                   Aprobada el{" "}
-                  {new Date(profile.approved_at).toLocaleDateString("es-MX", {
+                  {formatDateMX(profile.approved_at, {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
@@ -308,14 +308,11 @@ export default async function AdminAlumnoDetailPage({
                   <p className="text-xs text-bone-mute mt-2">
                     Rechazada el{" "}
                     {profile.rejected_at &&
-                      new Date(profile.rejected_at).toLocaleDateString(
-                        "es-MX",
-                        {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        },
-                      )}
+                      formatDateMX(profile.rejected_at, {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
                   </p>
                   {profile.rejection_reason && (
                     <p className="text-xs text-bone-mute mt-1 italic">
@@ -402,7 +399,7 @@ export default async function AdminAlumnoDetailPage({
           {student.enrolled_at && (
             <p className="text-xs text-bone-mute">
               Inscripción registrada el{" "}
-              {new Date(student.enrolled_at).toLocaleDateString("es-MX", {
+              {formatDateMX(student.enrolled_at, {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
@@ -533,10 +530,11 @@ export default async function AdminAlumnoDetailPage({
                   <span className="text-bone-mute">
                     {" "}
                     ·{" "}
-                    {new Date(student.photo_video_consent_at).toLocaleDateString(
-                      "es-MX",
-                      { day: "numeric", month: "short", year: "numeric" },
-                    )}
+                    {formatDateMX(student.photo_video_consent_at, {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </span>
                 )}
               </p>
@@ -577,12 +575,12 @@ export default async function AdminAlumnoDetailPage({
                     {activeSub.credits_remaining}/{activeSub.credits_total}
                   </span>{" "}
                   créditos · ciclo{" "}
-                  {new Date(activeSub.cycle_start_at).toLocaleDateString(
-                    "es-MX",
-                    { day: "numeric", month: "short" },
-                  )}{" "}
+                  {formatDateMX(activeSub.cycle_start_at, {
+                    day: "numeric",
+                    month: "short",
+                  })}{" "}
                   →{" "}
-                  {new Date(activeSub.cycle_end_at).toLocaleDateString("es-MX", {
+                  {formatDateMX(activeSub.cycle_end_at, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
@@ -690,7 +688,7 @@ export default async function AdminAlumnoDetailPage({
                   </p>
                   <p className="text-xs text-bone-mute mt-0.5 font-mono uppercase tracking-wider">
                     {p.paid_at
-                      ? new Date(p.paid_at).toLocaleDateString("es-MX", {
+                      ? formatDateMX(p.paid_at, {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
@@ -733,11 +731,12 @@ export default async function AdminAlumnoDetailPage({
           </p>
           <div className="space-y-2">
             {allSubs.map((s) => {
-              const start = new Date(s.cycle_start_at).toLocaleDateString(
-                "es-MX",
-                { day: "numeric", month: "short", year: "numeric" },
-              );
-              const end = new Date(s.cycle_end_at).toLocaleDateString("es-MX", {
+              const start = formatDateMX(s.cycle_start_at, {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              });
+              const end = formatDateMX(s.cycle_end_at, {
                 day: "numeric",
                 month: "short",
                 year: "numeric",

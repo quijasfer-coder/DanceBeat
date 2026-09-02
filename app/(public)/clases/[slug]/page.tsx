@@ -44,12 +44,23 @@ const formatSessionDate = (d: Date): string =>
     weekday: "short",
     day: "numeric",
     month: "short",
+    timeZone: "America/Mexico_City",
   })
     .format(d)
     .replace(".", "")
     .toUpperCase();
 
-/** Calcula próximas N ocurrencias futuras de un horario recurrente. */
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Calcula próximas N ocurrencias futuras de un horario recurrente.
+ * Todo el cálculo se ancla a hora de CDMX vía offset explícito -06:00
+ * (México no usa horario de verano desde 2022, así que es fijo todo el
+ * año) — usar setHours/getDay locales aquí se rompe en el server
+ * (Vercel corre en UTC): una clase de 18:30 CDMX cae en 00:30 UTC del
+ * día siguiente, así que el cálculo de "día de la semana" y "¿ya pasó
+ * hoy?" salía mal cerca de esa ventana de 6 horas cada tarde.
+ */
 function getUpcomingDates(
   schedules: Array<{ day_of_week: number; starts_at_time: string }>,
   count = 4,
@@ -57,18 +68,26 @@ function getUpcomingDates(
 ): Date[] {
   if (!schedules.length) return [];
   const out: Date[] = [];
+  const todayKey = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Mexico_City",
+  }).format(from);
+  // Medianoche CDMX del día de hoy, como instante real (06:00 UTC).
+  const todayMidnightMX = new Date(`${todayKey}T00:00:00-06:00`);
+  const todayDow = todayMidnightMX.getUTCDay();
+
   for (const s of schedules) {
-    const [h, m] = s.starts_at_time.split(":").map(Number);
-    const cursor = new Date(from);
-    cursor.setHours(h, m, 0, 0);
-    const ahead = (s.day_of_week - cursor.getDay() + 7) % 7;
-    cursor.setDate(cursor.getDate() + ahead);
-    if (ahead === 0 && cursor.getTime() < from.getTime()) {
-      cursor.setDate(cursor.getDate() + 7);
+    const ahead = (s.day_of_week - todayDow + 7) % 7;
+    const firstDay = new Date(todayMidnightMX);
+    firstDay.setUTCDate(firstDay.getUTCDate() + ahead);
+    const firstDayKey = firstDay.toISOString().slice(0, 10);
+    let firstOccurrence = new Date(
+      `${firstDayKey}T${s.starts_at_time}-06:00`,
+    );
+    if (firstOccurrence.getTime() < from.getTime()) {
+      firstOccurrence = new Date(firstOccurrence.getTime() + WEEK_MS);
     }
     for (let i = 0; i < count; i++) {
-      out.push(new Date(cursor));
-      cursor.setDate(cursor.getDate() + 7);
+      out.push(new Date(firstOccurrence.getTime() + i * WEEK_MS));
     }
   }
   return out.sort((a, b) => a.getTime() - b.getTime()).slice(0, count);

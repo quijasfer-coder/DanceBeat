@@ -9,6 +9,7 @@ import {
 } from "@/lib/queries/bookings";
 import { ReserveButton } from "./reserve-button";
 import { cn } from "@/lib/utils";
+import { dateKeyMX, formatDateMX, formatTimeMX } from "@/lib/format";
 
 export const metadata = {
   title: "Reservar clase",
@@ -46,7 +47,7 @@ export default async function ReservarPage() {
   // Agrupar sesiones por día
   const grouped = new Map<string, typeof sessions>();
   for (const s of sessions) {
-    const dateKey = new Date(s.starts_at).toISOString().slice(0, 10);
+    const dateKey = dateKeyMX(s.starts_at);
     const arr = grouped.get(dateKey) ?? [];
     arr.push(s);
     grouped.set(dateKey, arr);
@@ -126,7 +127,7 @@ export default async function ReservarPage() {
             const list = grouped.get(dateKey)!;
             const date = new Date(dateKey + "T12:00:00");
             const dayLabel = dayLabels[date.getDay()];
-            const fullLabel = date.toLocaleDateString("es-MX", {
+            const fullLabel = formatDateMX(date, {
               day: "numeric",
               month: "long",
               year: "numeric",
@@ -146,11 +147,7 @@ export default async function ReservarPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {list.map((s) => {
-                    const start = new Date(s.starts_at);
-                    const timeStr = start.toLocaleTimeString("es-MX", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    });
+                    const timeStr = formatTimeMX(s.starts_at);
                     const seatsLeft = s.capacity - s.seats_taken;
                     const full = seatsLeft <= 0;
                     return (

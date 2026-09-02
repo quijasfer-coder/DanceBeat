@@ -18,6 +18,7 @@ import {
   getMyActiveBookings,
   type MyBooking,
 } from "@/lib/queries/bookings";
+import { dateKeyMX, formatDateMX, formatTimeMX } from "@/lib/format";
 
 export const metadata = {
   title: "Mi cuenta",
@@ -223,16 +224,12 @@ export default async function AppDashboardPage() {
         ) : (
           <div className="space-y-2">
             {uniqueUpcoming.map((e) => {
-              const start = new Date(e.starts_at);
-              const dateStr = start.toLocaleDateString("es-MX", {
+              const dateStr = formatDateMX(e.starts_at, {
                 weekday: "short",
                 day: "numeric",
                 month: "short",
               });
-              const timeStr = start.toLocaleTimeString("es-MX", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
+              const timeStr = formatTimeMX(e.starts_at);
               return (
                 <Link
                   key={e.id}
@@ -296,18 +293,15 @@ export default async function AppDashboardPage() {
 
 const weekDayLabels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-function startOfDay(d: Date): Date {
-  const copy = new Date(d);
-  copy.setHours(0, 0, 0, 0);
-  return copy;
+// Ancla al mediodía UTC del día calendario de CDMX que le corresponde a
+// `d` — evita usar setHours(0,0,0,0)/getDate() locales, que en el server
+// (Vercel corre en UTC) leen el día calendario de UTC, no el de CDMX.
+function startOfDayMX(d: Date): Date {
+  return new Date(dateKeyMX(d) + "T12:00:00Z");
 }
 
 function sameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return dateKeyMX(a) === dateKeyMX(b);
 }
 
 /**
@@ -316,10 +310,10 @@ function sameDay(a: Date, b: Date): boolean {
  * calendario refleja mejor el ritmo real de la alumna que una lista.
  */
 function WeekCalendar({ bookings }: { bookings: MyBooking[] }) {
-  const today = startOfDay(new Date());
+  const today = startOfDayMX(new Date());
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(today);
-    date.setDate(date.getDate() + i);
+    date.setUTCDate(date.getUTCDate() + i);
     return date;
   });
 
@@ -353,12 +347,7 @@ function WeekCalendar({ bookings }: { bookings: MyBooking[] }) {
             ) : (
               <div className="space-y-2">
                 {dayBookings.map((b) => {
-                  const timeStr = new Date(
-                    b.class_sessions.starts_at,
-                  ).toLocaleTimeString("es-MX", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
+                  const timeStr = formatTimeMX(b.class_sessions.starts_at);
                   return (
                     <Link
                       key={b.id}

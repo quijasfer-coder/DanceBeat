@@ -18,13 +18,15 @@ export type EventFormState = { error?: string; success?: string } | null;
 // ─────────────────────────────────────────────────────────────────────
 
 function parseDateTimeLocal(raw: string | null | undefined): string | null {
-  // datetime-local devuelve "2026-05-15T19:30". Lo tratamos como
-  // hora local CDMX y lo convertimos a ISO con offset.
+  // datetime-local devuelve "2026-05-15T19:30" (sin zona horaria) — eso
+  // es hora de CDMX, no UTC. Sin anexar el offset, `new Date(raw)` en el
+  // server (Vercel corre en UTC) lo interpreta como 19:30 UTC = 13:30
+  // CDMX, guardando la hora 6h antes de lo que tecleó el admin.
+  // México no usa horario de verano desde 2022 — -06:00 es fijo todo el año.
   if (!raw) return null;
-  // Postgres acepta el formato sin TZ y lo trata como timestamptz si
-  // viene del cliente; mejor anexamos -06:00 (CDMX sin DST como
-  // aproximación; queda en backlog ajustar según horario de verano).
-  return new Date(raw).toISOString();
+  const d = new Date(`${raw}:00-06:00`);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
 }
 
 // ─────────────────────────────────────────────────────────────────────

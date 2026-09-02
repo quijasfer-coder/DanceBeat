@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Calendar } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireTeacher } from "@/lib/auth";
+import { formatDateMX, formatTimeMX } from "@/lib/format";
 import { GenerateSessionsForm } from "./generate-form";
 
 export const metadata = {
@@ -164,16 +165,12 @@ function SessionRow({
   capacity: number;
   muted?: boolean;
 }) {
-  const d = new Date(startsAt);
-  const dateStr = d.toLocaleDateString("es-MX", {
+  const dateStr = formatDateMX(startsAt, {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  const timeStr = d.toLocaleTimeString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const timeStr = formatTimeMX(startsAt);
 
   return (
     <li>

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireApprovedAccount } from "@/lib/auth";
-import { formatMxn } from "@/lib/format";
+import { formatMxn, formatDateMX, formatTimeMX } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/database.types";
 
@@ -220,16 +220,12 @@ function EventCard({
   muted?: boolean;
 }) {
   const Icon = kindIcons[event.kind];
-  const start = new Date(event.starts_at);
-  const dateStr = start.toLocaleDateString("es-MX", {
+  const dateStr = formatDateMX(event.starts_at, {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  const timeStr = start.toLocaleTimeString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const timeStr = formatTimeMX(event.starts_at);
 
   const sBadge = statusBadge[status];
   const pBadge = paymentBadge[paymentStatus];

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Plus, ImageIcon, ExternalLink, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { formatCalendarDate } from "@/lib/format";
 import { PublishToggle, DeleteAlbumButton } from "./album-actions";
 
 export const metadata = {
@@ -63,7 +64,7 @@ export default async function AdminGaleriaPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {list.map((a) => {
             const dateLabel = a.event_date
-              ? new Date(a.event_date).toLocaleDateString("es-MX", {
+              ? formatCalendarDate(a.event_date, {
                   day: "numeric",
                   month: "short",
                   year: "numeric",

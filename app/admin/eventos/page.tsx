@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { formatDateMX, formatTimeMX } from "@/lib/format";
 import type { Database } from "@/lib/database.types";
 
 export const metadata = {
@@ -144,23 +145,19 @@ export default async function AdminEventosListPage({
         <div className="space-y-3">
           {filtered.map((e) => {
             const Icon = kindIcons[e.kind];
-            const start = new Date(e.starts_at);
             const stat = stats.get(e.id) ?? {
               total: 0,
               confirmed: 0,
               paid: 0,
               pendingPay: 0,
             };
-            const dateStr = start.toLocaleDateString("es-MX", {
+            const dateStr = formatDateMX(e.starts_at, {
               weekday: "short",
               day: "numeric",
               month: "short",
               year: "numeric",
             });
-            const timeStr = start.toLocaleTimeString("es-MX", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+            const timeStr = formatTimeMX(e.starts_at);
 
             return (
               <Link

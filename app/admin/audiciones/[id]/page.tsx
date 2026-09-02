@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { formatDateTimeMX } from "@/lib/format";
 import { StatusSelector } from "./status-selector";
 import { NotesForm } from "./notes-form";
 import { DeleteAuditionButton } from "./delete-button";
@@ -49,12 +50,12 @@ export default async function AuditionDetailPage({
       reviewer?.full_name || reviewer?.email || application.reviewed_by;
   }
 
-  const createdAt = new Date(application.created_at).toLocaleString("es-MX", {
+  const createdAt = formatDateTimeMX(application.created_at, {
     dateStyle: "long",
     timeStyle: "short",
   });
   const reviewedAt = application.reviewed_at
-    ? new Date(application.reviewed_at).toLocaleString("es-MX", {
+    ? formatDateTimeMX(application.reviewed_at, {
         dateStyle: "long",
         timeStyle: "short",
       })

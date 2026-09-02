@@ -17,6 +17,7 @@ import {
   rejectAccountAction,
 } from "./actions";
 import { cn } from "@/lib/utils";
+import { formatDateMX } from "@/lib/format";
 
 type Student = {
   id: string;
@@ -47,7 +48,7 @@ export function RequestCard({
   const [showReject, setShowReject] = useState(false);
   const [reason, setReason] = useState("");
 
-  const created = new Date(createdAt).toLocaleDateString("es-MX", {
+  const created = formatDateMX(createdAt, {
     day: "numeric",
     month: "short",
     year: "numeric",

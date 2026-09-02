@@ -2,6 +2,7 @@ import Image from "next/image";
 import { ImageIcon, ExternalLink, Calendar } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireApprovedAccount } from "@/lib/auth";
+import { formatCalendarDate } from "@/lib/format";
 
 export const metadata = {
   title: "Galería",
@@ -45,7 +46,7 @@ export default async function AlumnaGaleriaPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {list.map((a) => {
             const dateLabel = a.event_date
-              ? new Date(a.event_date).toLocaleDateString("es-MX", {
+              ? formatCalendarDate(a.event_date, {
                   day: "numeric",
                   month: "long",
                   year: "numeric",
