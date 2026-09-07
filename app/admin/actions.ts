@@ -320,18 +320,72 @@ export async function deleteClassAction(
 /**
  * Da de baja (soft-delete) a un alumno poniéndolo is_active = false.
  * El registro se conserva en BD para historial.
+ *
+ * También limpia lo que la queda "colgando" si no: sus clases fijas
+ * (class_enrollments) y sus reservas futuras confirmadas — si no, la
+ * alumna sigue apareciendo en el pase de lista de la profe semana tras
+ * semana (bug encontrado 7 sep 2026: is_active no bastaba, el pase de
+ * lista muestra a quien tenga class_enrollments o booking sin importar
+ * si la alumna sigue activa).
  */
 export async function deactivateStudentAction(
   studentId: string,
 ): Promise<void> {
   await requireAdmin("/admin/alumnos");
   const supabase = createAdminClient();
+
   const { error } = await supabase
     .from("students")
     .update({ is_active: false })
     .eq("id", studentId);
   if (error) throw new Error(error.message);
+
+  await supabase.from("class_enrollments").delete().eq("student_id", studentId);
+
+  const { data: confirmedBookings } = await supabase
+    .from("bookings")
+    .select("id, class_sessions(starts_at)")
+    .eq("student_id", studentId)
+    .eq("status", "confirmed");
+
+  const now = Date.now();
+  const futureBookingIds = (confirmedBookings ?? [])
+    .filter((b) => {
+      const startsAt = (b.class_sessions as { starts_at: string } | null)
+        ?.starts_at;
+      return startsAt && new Date(startsAt).getTime() > now;
+    })
+    .map((b) => b.id);
+
+  if (futureBookingIds.length > 0) {
+    await supabase
+      .from("bookings")
+      .update({
+        status: "cancelled",
+        cancelled_at: new Date().toISOString(),
+        credit_returned: true,
+      })
+      .in("id", futureBookingIds);
+
+    const { data: activeSub } = await supabase
+      .from("subscriptions")
+      .select("id, credits_remaining")
+      .eq("student_id", studentId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (activeSub) {
+      await supabase
+        .from("subscriptions")
+        .update({
+          credits_remaining: activeSub.credits_remaining + futureBookingIds.length,
+        })
+        .eq("id", activeSub.id);
+    }
+  }
+
   revalidatePath("/admin/alumnos");
+  revalidatePath("/app");
 }
 
 /**
