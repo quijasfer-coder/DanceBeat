@@ -13,6 +13,7 @@ import { requireApprovedAccount } from "@/lib/auth";
 import { formatMxn, formatDateMX, formatTimeMX } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/database.types";
+import { RsvpButtons } from "./rsvp-buttons";
 
 export const metadata = {
   title: "Mis eventos · Dance Beat",
@@ -171,10 +172,12 @@ export default async function MisEventosPage() {
                 {upcoming.map((a) => (
                   <EventCard
                     key={a.id}
+                    assignmentId={a.id}
                     studentName={studentNameMap.get(a.student_id) ?? "—"}
                     event={a.event!}
                     status={a.status}
                     paymentStatus={a.payment_status}
+                    canRsvp
                   />
                 ))}
               </div>
@@ -207,17 +210,21 @@ export default async function MisEventosPage() {
 }
 
 function EventCard({
+  assignmentId,
   event,
   studentName,
   status,
   paymentStatus,
   muted,
+  canRsvp,
 }: {
+  assignmentId?: string;
   event: Database["public"]["Tables"]["events"]["Row"];
   studentName: string;
   status: AssignmentStatus;
   paymentStatus: PaymentStatus;
   muted?: boolean;
+  canRsvp?: boolean;
 }) {
   const Icon = kindIcons[event.kind];
   const dateStr = formatDateMX(event.starts_at, {
@@ -309,6 +316,14 @@ function EventCard({
               </span>
             </p>
           )}
+
+          {canRsvp &&
+            assignmentId &&
+            (status === "invited" ||
+              status === "confirmed" ||
+              status === "declined") && (
+              <RsvpButtons assignmentId={assignmentId} status={status} />
+            )}
         </div>
       </div>
     </article>
